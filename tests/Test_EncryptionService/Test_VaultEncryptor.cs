@@ -34,6 +34,21 @@ namespace Test_EncryptionService {
 		}
 
 
+
+		// Tests that The IV Size is 16
+		[Test]
+		public void IVSize_Correct()
+		{
+			// Setup
+			// Test
+			VaultEncryptor vaultEncryptor = new VaultEncryptor();
+
+			// Validate
+			Assert.AreEqual(16, vaultEncryptor.IVSize, "A10:");
+		}
+
+
+
 		/// <summary>
 		/// KeyName must be of exact size.
 		/// </summary>
@@ -42,7 +57,7 @@ namespace Test_EncryptionService {
 			// Setup
 			string keyName = "TooShort";
 			string secret = "abcDEFGHijklmnopqrstuvwxyz123456";
-			string iv = "abcDEFGHijklmnopqrstuvwxyz123456";
+			string iv = "abcDEFGHijklmnop";
 			string data = "something to encrypt";
 
 			byte[] secretBytes = Encoding.ASCII.GetBytes(secret);
@@ -54,11 +69,11 @@ namespace Test_EncryptionService {
 			VaultEncryptor vaultEncryptor = new VaultEncryptor();
 
 			// Validation
-			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, secretBytes, ivBytes, dataBytes),"A10:");
+			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, secretBytes, ivBytes, data),"A10:");
 
 			// Validate proper argument exception
 			string fieldName = "characters in length";
-			try { vaultEncryptor.Encrypt(keyName, secretBytes, ivBytes, dataBytes); }
+			try { vaultEncryptor.Encrypt(keyName, secretBytes, ivBytes, data); }
 			catch (ArgumentException e)
 			{
 				Assert.IsTrue(e.Message.Contains(fieldName));
@@ -80,7 +95,7 @@ namespace Test_EncryptionService {
 			// Setup
 			string keyName = "";
 			string secret = "abcDEFGHijklmnopqrstuvwxyz123456";
-			string iv = "abcDEFGHijklmnopqrstuvwxyz123456";
+			string iv = "abcDEFGHijklmnop";
 			string data = "something to encrypt";
 
 			byte[] secretBytes = Encoding.ASCII.GetBytes(secret);
@@ -92,11 +107,11 @@ namespace Test_EncryptionService {
 			VaultEncryptor vaultEncryptor = new VaultEncryptor();
 
 			// Validation
-			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, secretBytes, ivBytes, dataBytes), "A10:");
+			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, secretBytes, ivBytes, data), "A10:");
 
 			// Validate proper argument exception
 			string fieldName = "[keyName]";
-			try { vaultEncryptor.Encrypt(keyName, secretBytes, ivBytes, dataBytes); }
+			try { vaultEncryptor.Encrypt(keyName, secretBytes, ivBytes, data); }
 			catch ( ArgumentException e ) {
 				Assert.IsTrue(e.Message.Contains(fieldName));
 				return;
@@ -117,7 +132,7 @@ namespace Test_EncryptionService {
 			// Setup
 			string keyName = null;
 			string secret = "abcDEFGHijklmnopqrstuvwxyz123456";
-			string iv = "abcDEFGHijklmnopqrstuvwxyz123456";
+			string iv = "abcDEFGHijklmnop";
 			string data = "something to encrypt";
 
 			byte[] secretBytes = Encoding.ASCII.GetBytes(secret);
@@ -129,12 +144,12 @@ namespace Test_EncryptionService {
 			VaultEncryptor vaultEncryptor = new VaultEncryptor();
 
 			// Validation
-			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, secretBytes, ivBytes, dataBytes), "A10:");
+			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, secretBytes, ivBytes, data), "A10:");
 
 
 			// Validate proper argument exception
 			string fieldName = "[keyName]";
-			try { vaultEncryptor.Encrypt(keyName, secretBytes, ivBytes, dataBytes); }
+			try { vaultEncryptor.Encrypt(keyName, secretBytes, ivBytes, data); }
 			catch (ArgumentException e)
 			{
 				Assert.IsTrue(e.Message.Contains(fieldName));
@@ -157,8 +172,8 @@ namespace Test_EncryptionService {
 			// Setup
 			string keyName = "ABCDEFGHIJKLMNOP";
 			string secret = "abcDEFGHijklmnopqrstuvwxyz123456";
-			string validIV = "abcDEFGHijklmnopqrstuvwxyz123456";
-			string invalidIV = "abcdefgghghhh";
+			string validIV = "abcDEFGHijklmnop";
+			string invalidIV = "abcdefgghh";
 			string data = "something to encrypt";
 
 			byte[] secretBytes = Encoding.ASCII.GetBytes(secret);
@@ -172,16 +187,16 @@ namespace Test_EncryptionService {
 
 			// Validation
 			// A. Properly sized IV passes.
-			byte[]encrypted = vaultEncryptor.Encrypt(keyName, secretBytes, validIVBytes, dataBytes);
+			byte[]encrypted = vaultEncryptor.Encrypt(keyName, secretBytes, validIVBytes, data);
 			Assert.GreaterOrEqual(encrypted.Length,0,"A10:  Encryption failed.  This should have succeeded.");
 
 			// B. Now Invalid IV
-			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, secretBytes, invalidIVBytes, dataBytes), "A20:");
+			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, secretBytes, invalidIVBytes, data), "A20:");
 
 			
 			// Validate proper argument exception
 			string fieldName = "[iv]";
-			try { vaultEncryptor.Encrypt(keyName, secretBytes, invalidIVBytes, dataBytes); }
+			try { vaultEncryptor.Encrypt(keyName, secretBytes, invalidIVBytes, data); }
 			catch (ArgumentException e)
 			{
 				Assert.IsTrue(e.Message.Contains(fieldName));
@@ -204,7 +219,7 @@ namespace Test_EncryptionService {
 			string keyName = "ABCDEFGHIJKLMNOP";
 			string validSecret = "abcDEFGHijklmnopqrstuvwxyz123456";
 			string invalidSecret = "abcde";
-			string validIV = "abcDEFGHijklmnopqrstuvwxyz123456";
+			string validIV = "abcDEFGHijklmnop";
 			string data = "something to encrypt";
 
 			byte[] validSecretBytes = Encoding.ASCII.GetBytes(validSecret);
@@ -218,16 +233,16 @@ namespace Test_EncryptionService {
 
 			// Validation
 			// A. Properly sized Secret passes.
-			byte[] encrypted = vaultEncryptor.Encrypt(keyName, validSecretBytes, validIVBytes, dataBytes);
+			byte[] encrypted = vaultEncryptor.Encrypt(keyName, validSecretBytes, validIVBytes, data);
 			Assert.Greater(encrypted.Length, 0, "A10:  Encryption failed.  This should have succeeded.");
 
 			// B. Now Invalid Secret
-			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, inValidSecretBytes, validIVBytes, dataBytes), "A20:");
+			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, inValidSecretBytes, validIVBytes, data), "A20:");
 
 
 			// Validate proper argument exception
 			string fieldName = "[secret]";
-			try { vaultEncryptor.Encrypt(keyName, inValidSecretBytes, validIVBytes, dataBytes); }
+			try { vaultEncryptor.Encrypt(keyName, inValidSecretBytes, validIVBytes, data); }
 			catch (ArgumentException e)
 			{
 				Assert.IsTrue(e.Message.Contains(fieldName));
@@ -247,8 +262,8 @@ namespace Test_EncryptionService {
 			// Setup
 			string keyName = "ABCDEFGHIJKLMNOP";
 			string validSecret = "abcDEFGHijklmnopqrstuvwxyz123456";
-			string validIV = "abcDEFGHijklmnopqrstuvwxyz123456";
-			string data = "something to encrypt";
+			string validIV = "abcDEFGHijklmnop";
+			string data = "something to encrypt is written here so do it NOW";
 
 			byte[] validSecretBytes = Encoding.ASCII.GetBytes(validSecret);
 			byte[] validIVBytes = Encoding.ASCII.GetBytes(validIV);
@@ -257,11 +272,34 @@ namespace Test_EncryptionService {
 
 			// Test
 			VaultEncryptor vaultEncryptor = new VaultEncryptor();
-			byte[] encryptedData = vaultEncryptor.Encrypt(keyName, validSecretBytes, validIVBytes, dataBytes);
+			byte[] encryptedData = vaultEncryptor.Encrypt(keyName, validSecretBytes, validIVBytes, data);
 
+			vaultEncryptor.Decrypt(keyName, validSecretBytes, encryptedData);
 			// Validate
 			Assert.NotZero(encryptedData.Length,"A10:");
 			Assert.Greater(encryptedData.Length,data.Length, "A20:");
+		}
+
+
+		[Test]
+		public void En2 () {
+			string keyName = "ABCDEFGHIJKLMNOP";
+			string validSecret = "abcDEFGHijklmnop";
+			string validIV = "abcDEFGHijklmnop";
+			string data = "something to encrypt is written here so do it NOW";
+			
+			byte[] validSecretBytes = Encoding.ASCII.GetBytes(validSecret);
+			byte[] validIVBytes = Encoding.ASCII.GetBytes(validIV);
+			byte[] dataBytes = Encoding.ASCII.GetBytes(data);
+
+			//validIVBytes = null;
+			VaultEncryptor vaultEncryptor = new VaultEncryptor();
+			byte[] enc = vaultEncryptor.Encrypt(keyName,validSecretBytes,data);
+			//byte[] enc = vaultEncryptor.Encrypt3();
+
+			string dec = vaultEncryptor.Decrypt(keyName, validSecretBytes,enc);
+			Assert.AreEqual(data,dec,"A10:");
+			//vaultEncryptor.Decrypt3(enc);
 		}
 	}
 }

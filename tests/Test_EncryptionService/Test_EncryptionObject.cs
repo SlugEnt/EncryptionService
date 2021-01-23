@@ -21,9 +21,9 @@ namespace Test_EncryptionService
 			EncryptionObject encryptionObject = new EncryptionObject(key,desc,ttl);
 
 			Assert.AreEqual(key,encryptionObject.KeyName,"A10:");
-			Assert.AreEqual(desc, encryptionObject.Description);
-			Assert.AreEqual(ttl,encryptionObject.TTL);
-			Assert.IsNotEmpty(encryptionObject.Id.ToString());
+			Assert.AreEqual(desc, encryptionObject.Description,"A20:");
+			Assert.AreEqual(ttl,encryptionObject.TTL,"A30:");
+			Assert.IsNotEmpty(encryptionObject.Id.ToString(),"A40:");
 			Assert.AreEqual(0,encryptionObject.CurrentVersion,"A50:");
 			Assert.AreEqual(EnumObjectEncryptionStatus.Active,encryptionObject.Status,"A60:");
 		}
