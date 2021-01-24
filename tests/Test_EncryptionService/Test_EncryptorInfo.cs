@@ -60,11 +60,6 @@ namespace Test_EncryptionService
 			string after = Encoding.ASCII.GetString(updated, index, length);
 			string orig = Encoding.ASCII.GetString(original, index, length);
 			Assert.AreEqual(orig, after, "A30:  The storage array after the Version Bytes has been updated.  There should have been no changes to these bytes");
-
-
-			string afterKeyName = Encoding.ASCII.GetString(updated, EncryptorInfo.KEYNAME_LENGTH, EncryptorInfo.STORAGE_LEN - EncryptorInfo.KEYNAME_LENGTH);
-			string origAfterKeyName = Encoding.ASCII.GetString(original, EncryptorInfo.KEYNAME_LENGTH, EncryptorInfo.STORAGE_LEN - EncryptorInfo.KEYNAME_LENGTH);
-			Assert.AreEqual(origAfterKeyName,afterKeyName,"A30:");
 		}
 
 
@@ -92,14 +87,14 @@ namespace Test_EncryptionService
 
 			// Ensure all bytes before the version are empty.
 			int index = 0;
-			int length = EncryptorInfo.KEYNAME_LENGTH;
+			int length = EncryptorInfo.KEYNAME_START + EncryptorInfo.KEYNAME_LENGTH;
 			string after = Encoding.ASCII.GetString(updated, index, length);
 			string orig = Encoding.ASCII.GetString(original, index, length);
 			Assert.AreEqual(orig,after,"A20:  The storage array before the Version bytes has been updated.  There should have been no change to these bytes");
 
 			// Ensure all bytes after the Version are empty.
 			index = EncryptorInfo.VER_START + EncryptorInfo.VER_LENGTH;
-			length = EncryptorInfo.STORAGE_LEN - EncryptorInfo.VER_LENGTH - EncryptorInfo.KEYNAME_LENGTH;
+			length = EncryptorInfo.STORAGE_LEN - (EncryptorInfo.VER_LENGTH + EncryptorInfo.VER_START);
 			after = Encoding.ASCII.GetString(updated, index,length);
 			orig = Encoding.ASCII.GetString(original, index, length);
 			Assert.AreEqual(orig, after, "A30:  The storage array after the Version Bytes has been updated.  There should have been no changes to these bytes");
@@ -147,6 +142,93 @@ namespace Test_EncryptionService
 			after = Encoding.ASCII.GetString(updated, index, length);
 			orig = Encoding.ASCII.GetString(original, index, length);
 			Assert.AreEqual(orig, after, "A30:  The storage array after the LastUpdated Bytes has been updated.  There should have been no changes to these bytes");
+		}
+
+
+		// Ensure the RecordIdentifier is correct and has not changed
+		[Test]
+		public void RecordIdentifier_CorrectValue_OnCreation () {
+			EncryptorInfo encryptor = new EncryptorInfo();
+			Assert.AreEqual(EncryptorInfo.RECORD_IDENTIFIER_VALUE,encryptor.RecordIdentifier,"A10:  The Record Identifier as a short must match the byte array.  One of these has changed.  This can be a detrimental change to existing encrypted objects.  Ensure the change was warranted and you have a plan to deal with existing encrypted objects as they will no longer work with this new code base");
+
+			// This just confirms the value is the original value when this class was created.  Changing this value will guarantee exiting encrypted objects will not be able to be decrypted with the new version of this class.
+			Assert.AreEqual(43275, encryptor.RecordIdentifier, "A10:  The Record Identifier as a short must match the byte array.  One of these has changed.  This can be a detrimental change to existing encrypted objects.  Ensure the change was warranted and you have a plan to deal with existing encrypted objects as they will no longer work with this new code base");
+		}
+
+
+		[Test]
+		public void Constructor_ExistingData_Success () {
+			// Setup - Create an encryptor
+			EncryptorInfo encryptor = new EncryptorInfo();
+			encryptor.KeyName = "abGT";
+			encryptor.Version = 1;
+			encryptor.LastUpdated = DateTime.Now;
+
+
+			byte [] createdEncryptorBytes = encryptor.GetAsBytes();
+
+			// Test - Create a new encryptor from the existing.
+			EncryptorInfo newEncryptorInfo = new EncryptorInfo(createdEncryptorBytes);
+
+			// Validate
+			Assert.AreEqual(encryptor.RecordIdentifier, newEncryptorInfo.RecordIdentifier,"A10:");
+			Assert.AreEqual(encryptor.KeyName,newEncryptorInfo.KeyName,"A20:");
+			Assert.AreEqual(encryptor.Version,newEncryptorInfo.Version,"A30:");
+			Assert.AreEqual(encryptor.LastUpdated,newEncryptorInfo.LastUpdated,"A40:");
+			Assert.AreEqual(true,newEncryptorInfo.IsEncryptorInfo,"A100:");
+		}
+
+
+		// Invalid byte stream with incorrect Record Header Identifier throws error.
+		[Test]
+		public void Constructor_InvalidExistingData_IsEncryptorInfo_False () {
+			byte [] existingBytes = new byte[] {0x65, 0x56, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10, 0x11, 0x12, 0x13, 0x14, 0x16, 0x15};
+			EncryptorInfo bad;
+			Assert.Throws<ArgumentException> (() => new EncryptorInfo(existingBytes),"A10:");
+
+		}
+
+
+
+		// Validates Bytes and AsBytes yield same result.
+		[Test]
+		public void GetBytes_Equals_GetAsBytes () {
+			// Setup - Create an encryptor
+			EncryptorInfo encryptor = new EncryptorInfo();
+			encryptor.KeyName = "1954";
+			encryptor.Version = 464;
+			encryptor.LastUpdated = DateTime.Now;
+
+			// Test
+			byte [] asBytes = encryptor.GetAsBytes();
+			byte [] bytes = encryptor.GetBytes();
+
+			// Validate
+			Assert.AreEqual(bytes,asBytes,"A10:  The 2 arrays should have been exactly equal");
+
+		}
+
+
+		[Test]
+		public void GetAsBytes_DoesNotChange_InternalStorage () {
+			// Setup - Create an encryptor
+			EncryptorInfo encryptor = new EncryptorInfo();
+			encryptor.KeyName = "1954";
+			encryptor.Version = 464;
+			encryptor.LastUpdated = DateTime.Now;
+			byte[] origBytes = encryptor.GetBytes();
+
+			// Test
+			byte[] asBytes = encryptor.GetAsBytes();
+			asBytes[4] = 0x19;
+			asBytes[13] = 0xA2;
+
+
+			// Validate
+			byte[] bytes = encryptor.GetBytes();
+			Assert.AreNotEqual(bytes, asBytes, "A20:  The 2 arrays should have not been equal.");
+			Assert.AreEqual(origBytes,bytes,"A30: The underlying byte array for EncryptorInfo should never be able to be changed externally");
+
 		}
 	}
 }
