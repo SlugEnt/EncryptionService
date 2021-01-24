@@ -6,7 +6,7 @@ using System.Text;
 namespace SlugEnt.EncryptionService
 {
 	public class EncryptionObject {
-		public Guid Id;
+		public string KeyID;
 		public string KeyName;
 		public string Description;
 		public TimeUnit TTL;
@@ -20,12 +20,13 @@ namespace SlugEnt.EncryptionService
 		/// <param name="keyName"></param>
 		/// <param name="description"></param>
 		/// <param name="ttl"></param>
-		public EncryptionObject (string keyName, string description, TimeUnit ttl) {
+		public EncryptionObject (string keyName, string keyID, string description, TimeUnit ttl) {
 			KeyName = keyName;
 			Description = description;
 			TTL = ttl;
 			CurrentVersion = 0;
-			Id = new Guid();
+			KeyID = keyID;
+			//Id = new Guid();
 			Status = EnumObjectEncryptionStatus.Active;
 		}
 

@@ -17,13 +17,14 @@ namespace Test_EncryptionService
 			string key = "ABC.XYZ.123";
 			string desc = "testing Object";
 			TimeUnit ttl = new TimeUnit("5d");
+			string keyID = "3";
 
-			EncryptionObject encryptionObject = new EncryptionObject(key,desc,ttl);
+			EncryptionObject encryptionObject = new EncryptionObject(key,keyID,desc,ttl);
 
 			Assert.AreEqual(key,encryptionObject.KeyName,"A10:");
 			Assert.AreEqual(desc, encryptionObject.Description,"A20:");
 			Assert.AreEqual(ttl,encryptionObject.TTL,"A30:");
-			Assert.IsNotEmpty(encryptionObject.Id.ToString(),"A40:");
+			Assert.IsNotEmpty(encryptionObject.KeyID.ToString(),"A40:");
 			Assert.AreEqual(0,encryptionObject.CurrentVersion,"A50:");
 			Assert.AreEqual(EnumObjectEncryptionStatus.Active,encryptionObject.Status,"A60:");
 		}

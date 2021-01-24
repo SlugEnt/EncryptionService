@@ -6,7 +6,7 @@ namespace SlugEnt.EncryptionService
 	public class EncryptionService {
 		private string MasterEncryptionKey = "abc45443gtrgegtr87056434TRTGTR434rgfgtPLAtg";
 
-		private Dictionary<Guid, EncryptionObject> _encryptionObjects;
+		private Dictionary<string, EncryptionObject> _encryptionObjects;
 
 
 		/// <summary>
@@ -14,7 +14,7 @@ namespace SlugEnt.EncryptionService
 		/// </summary>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		public EncryptionObject Get (Guid id) {
+		public EncryptionObject Get (string id) {
 			EncryptionObject obj;
 			if ( !_encryptionObjects.TryGetValue(id, out obj) ) return null;
 			return obj;
@@ -27,7 +27,7 @@ namespace SlugEnt.EncryptionService
 		/// <param name="encryptionObject"></param>
 		/// <returns></returns>
 		public bool Insert (EncryptionObject encryptionObject) {
-			if ( !_encryptionObjects.TryAdd(encryptionObject.Id, encryptionObject) ) return false;
+			if ( !_encryptionObjects.TryAdd(encryptionObject.KeyID, encryptionObject) ) return false;
 			return true;
 		}
 

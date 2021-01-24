@@ -15,20 +15,20 @@ namespace Test_EncryptionService {
 
 
 			EncryptionService encryptionService = new EncryptionService();
-			EncryptionObject encB = new EncryptionObject(key, desc, ttl);
-			EncryptionObject encA = new EncryptionObject(key + ".A",desc + ".A", ttl.AddDays(2));
-			EncryptionObject encC = new EncryptionObject(key + ".C",desc + ".C", ttl.AddDays(5));
+			EncryptionObject encB = new EncryptionObject(key,"XYZ", desc, ttl);
+			EncryptionObject encA = new EncryptionObject(key + ".A","XYZ",desc + ".A", ttl.AddDays(2));
+			EncryptionObject encC = new EncryptionObject(key + ".C","XYZ",desc + ".C", ttl.AddDays(5));
 
 			encryptionService.Insert(encA);
 			encryptionService.Insert(encB);
 			encryptionService.Insert(encC);
 
 			// Testing
-			EncryptionObject enc = encryptionService.Get(encB.Id);
+			EncryptionObject enc = encryptionService.Get(encB.KeyID);
 
 
 			// Validation
-			Assert.AreEqual(encB.Id,enc.Id,"A10:");
+			Assert.AreEqual(encB.KeyID,enc.KeyID,"A10:");
 			Assert.AreEqual(encB.KeyName,enc.KeyName,"A20:");
 			Assert.AreEqual(encB.TTL,enc.TTL,"A30:");
 		}

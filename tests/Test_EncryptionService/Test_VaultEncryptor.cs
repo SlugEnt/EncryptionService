@@ -34,7 +34,7 @@ namespace Test_EncryptionService {
 		}
 
 
-
+		/*
 		// Tests that The IV Size is 16
 		[Test]
 		public void IVSize_Correct()
@@ -46,7 +46,7 @@ namespace Test_EncryptionService {
 			// Validate
 			Assert.AreEqual(16, vaultEncryptor.IVSize, "A10:");
 		}
-
+*/
 
 
 		/// <summary>
@@ -69,11 +69,11 @@ namespace Test_EncryptionService {
 			VaultEncryptor vaultEncryptor = new VaultEncryptor();
 
 			// Validation
-			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, secretBytes, ivBytes, data),"A10:");
+			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, secretBytes,  data),"A10:");
 
 			// Validate proper argument exception
 			string fieldName = "characters in length";
-			try { vaultEncryptor.Encrypt(keyName, secretBytes, ivBytes, data); }
+			try { vaultEncryptor.Encrypt(keyName, secretBytes, data); }
 			catch (ArgumentException e)
 			{
 				Assert.IsTrue(e.Message.Contains(fieldName));
@@ -107,11 +107,11 @@ namespace Test_EncryptionService {
 			VaultEncryptor vaultEncryptor = new VaultEncryptor();
 
 			// Validation
-			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, secretBytes, ivBytes, data), "A10:");
+			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, secretBytes, data), "A10:");
 
 			// Validate proper argument exception
 			string fieldName = "[keyName]";
-			try { vaultEncryptor.Encrypt(keyName, secretBytes, ivBytes, data); }
+			try { vaultEncryptor.Encrypt(keyName, secretBytes, data); }
 			catch ( ArgumentException e ) {
 				Assert.IsTrue(e.Message.Contains(fieldName));
 				return;
@@ -144,12 +144,12 @@ namespace Test_EncryptionService {
 			VaultEncryptor vaultEncryptor = new VaultEncryptor();
 
 			// Validation
-			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, secretBytes, ivBytes, data), "A10:");
+			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, secretBytes, data), "A10:");
 
 
 			// Validate proper argument exception
 			string fieldName = "[keyName]";
-			try { vaultEncryptor.Encrypt(keyName, secretBytes, ivBytes, data); }
+			try { vaultEncryptor.Encrypt(keyName, secretBytes,  data); }
 			catch (ArgumentException e)
 			{
 				Assert.IsTrue(e.Message.Contains(fieldName));
@@ -162,7 +162,7 @@ namespace Test_EncryptionService {
 		}
 
 
-
+/*
 		/// <summary>
 		/// IV must be exact size.
 		/// </summary>
@@ -187,16 +187,16 @@ namespace Test_EncryptionService {
 
 			// Validation
 			// A. Properly sized IV passes.
-			byte[]encrypted = vaultEncryptor.Encrypt(keyName, secretBytes, validIVBytes, data);
+			byte[]encrypted = vaultEncryptor.Encrypt(keyName, secretBytes,  data);
 			Assert.GreaterOrEqual(encrypted.Length,0,"A10:  Encryption failed.  This should have succeeded.");
 
 			// B. Now Invalid IV
-			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, secretBytes, invalidIVBytes, data), "A20:");
+			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, secretBytes,  data), "A20:");
 
 			
 			// Validate proper argument exception
 			string fieldName = "[iv]";
-			try { vaultEncryptor.Encrypt(keyName, secretBytes, invalidIVBytes, data); }
+			try { vaultEncryptor.Encrypt(keyName, secretBytes, data); }
 			catch (ArgumentException e)
 			{
 				Assert.IsTrue(e.Message.Contains(fieldName));
@@ -206,7 +206,7 @@ namespace Test_EncryptionService {
 			// This will always error.  If we are here, then the test did not run properly
 			Assert.IsFalse(true, "A10: An exception was thrown, but not the one we were expecting.  Expecting ArgumentException with a field of " + fieldName);
 		}
-
+*/
 
 
 		/// <summary>
@@ -233,16 +233,16 @@ namespace Test_EncryptionService {
 
 			// Validation
 			// A. Properly sized Secret passes.
-			byte[] encrypted = vaultEncryptor.Encrypt(keyName, validSecretBytes, validIVBytes, data);
+			byte[] encrypted = vaultEncryptor.Encrypt(keyName, validSecretBytes, data);
 			Assert.Greater(encrypted.Length, 0, "A10:  Encryption failed.  This should have succeeded.");
 
 			// B. Now Invalid Secret
-			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, inValidSecretBytes, validIVBytes, data), "A20:");
+			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, inValidSecretBytes,  data), "A20:");
 
 
 			// Validate proper argument exception
 			string fieldName = "[secret]";
-			try { vaultEncryptor.Encrypt(keyName, inValidSecretBytes, validIVBytes, data); }
+			try { vaultEncryptor.Encrypt(keyName, inValidSecretBytes, data); }
 			catch (ArgumentException e)
 			{
 				Assert.IsTrue(e.Message.Contains(fieldName));
@@ -272,7 +272,7 @@ namespace Test_EncryptionService {
 
 			// Test
 			VaultEncryptor vaultEncryptor = new VaultEncryptor();
-			byte[] encryptedData = vaultEncryptor.Encrypt(keyName, validSecretBytes, validIVBytes, data);
+			byte[] encryptedData = vaultEncryptor.Encrypt(keyName, validSecretBytes, data);
 
 			vaultEncryptor.Decrypt(keyName, validSecretBytes, encryptedData);
 			// Validate
@@ -284,7 +284,7 @@ namespace Test_EncryptionService {
 		[Test]
 		public void En2 () {
 			string keyName = "ABCDEFGHIJKLMNOP";
-			string validSecret = "abcDEFGHijklmnop";
+			string validSecret = "abcDEFGHijklmnopabcDEFGHijklmnop";
 			string validIV = "abcDEFGHijklmnop";
 			string data = "something to encrypt is written here so do it NOW";
 			

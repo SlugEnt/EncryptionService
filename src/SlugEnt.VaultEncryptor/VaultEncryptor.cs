@@ -6,20 +6,27 @@ namespace SlugEnt.VaultEncryptor
 {
 	/// <summary>
 	/// Enables the Encrpytion of secret pieces of data
+	/// <para>4 Bytes KeyName</para>
+	/// <para>2 Bytes Version # up 65535 (unsigned)</para>
+	/// <para>8 Bytes Update Time</para>
+	/// <para></para>
 	/// </summary>
 	public class VaultEncryptor {
-		// This must NOT Be changed - EVER. It may break existing encrypted objects.  Serious, as in significant testing should
-		// be performed if this is changed.
-		private const int BIT_SIZE = 128;
-		private const int BYTE_SIZE = 16;
-		private const int IV_SIZE = 16;
+		// These must NOT Be changed - EVER. It may break existing encrypted objects.  Serious, as in significant testing should be performed if this is changed.
+		private const int BIT_SIZE = 256;
+		private const int BYTE_SIZE = 32;
+		//private const int IV_SIZE = 16;
+
+		private Aes aesEncryptor;
 
 
 		/// <summary>
 		/// <para>Encryption Mode used is AES 256 bit with CBC algorithm</para>
 		/// </summary>
-		public VaultEncryptor () { }
+		public VaultEncryptor () {
+			aesEncryptor = Aes.Create();
 
+		}
 
 		/// <summary>
 		/// Returns the Bit Size of encryption Algorithm
@@ -37,29 +44,30 @@ namespace SlugEnt.VaultEncryptor
 			get { return (BYTE_SIZE); }
 		}
 
-
+/*
 		/// <summary>
 		/// Returns the IV required size in Bytes.
 		/// </summary>
 		public int IVSize {
 			get { return IV_SIZE; }
 		}
+*/
 
-
+		
+/*
 		public byte [] Encrypt (string keyName, byte [] secret, string dataToEncrypt) {
 			return Encrypt(keyName, secret, null, dataToEncrypt);
 		}
-
+*/
 
 
 		/// <summary>
 		/// Encrypts the given data
 		/// </summary>
 		/// <param name="secret">The secret for the encrypted data.</param>
-		/// <param name="iv"></param>
 		/// <param name="data"></param>
 		/// <returns></returns>
-		public byte [] Encrypt (string keyName, byte [] secret, byte [] iv, string dataToEncrypt) {
+		public byte [] Encrypt (string keyName, byte [] secret, string dataToEncrypt) {
 		if ( string.IsNullOrEmpty(keyName) ) throw new ArgumentException("The parameter [keyName] cannot be empty or null");
 		if ( keyName.Length != 16 ) throw new ArgumentException("The parameter [keyName] must be exactly 16 characters in length");
 		if ( secret.Length != BYTE_SIZE ) throw new ArgumentException("The parameter [secret] is not of the exact size required - " + BYTE_SIZE);
@@ -74,13 +82,14 @@ namespace SlugEnt.VaultEncryptor
 
 		//Stores IV at the beginning of the file.
 		//This information will be used for decryption.
+		/*
 		if ( iv != null ) {
 			if ( iv.Length != IV_SIZE ) throw new ArgumentException("The parameter [iv] is not of the exact size required - " + IV_SIZE);
 		}
 		else
 			iv = aes.IV;
-
-		myStream.Write(iv, 0, iv.Length);
+		*/
+		myStream.Write(aes.IV, 0, aes.IV.Length);
 
 		//Create a CryptoStream, pass it the FileStream, and encrypt it with the Aes class.  
 		using CryptoStream cryptStream = new CryptoStream(myStream, aes.CreateEncryptor(), CryptoStreamMode.Write);
@@ -90,8 +99,7 @@ namespace SlugEnt.VaultEncryptor
 
 		//Write to the stream.  
 		//sWriter.Write(data);
-		sWriter.Write(dataToEncrypt); 
-		//sWriter.Write("Trump is gone.  Trump is gone.  Trump never more.");
+		sWriter.Write(dataToEncrypt);
 
 		sWriter.Flush();
 		cryptStream.FlushFinalBlock();
@@ -116,7 +124,7 @@ namespace SlugEnt.VaultEncryptor
 				aes.Key = secret;
 
 				//Reads IV value from beginning of the file.
-				byte [] iv = new byte[IVSize];
+				byte [] iv = new byte[aes.IV.Length];
 				myStream.Read(iv, 0, iv.Length);
 				aes.IV = iv;
 
