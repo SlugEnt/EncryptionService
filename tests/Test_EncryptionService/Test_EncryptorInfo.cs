@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data.Common;
+using System.Net.Security;
 using System.Text;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
@@ -54,7 +55,7 @@ namespace Test_EncryptionService
 			Assert.AreEqual(keyName,internalKeyName,"A20:");
 
 
-			// Ensure all bytes after the KeyName are empty.
+			// Ensure all bytes after the KeyNameShort are empty.
 			int index = EncryptorInfo.KEYNAME_START + EncryptorInfo.KEYNAME_LENGTH;
 			int length = EncryptorInfo.STORAGE_LEN - (EncryptorInfo.KEYNAME_START + EncryptorInfo.KEYNAME_LENGTH);
 			string after = Encoding.ASCII.GetString(updated, index, length);
@@ -183,9 +184,7 @@ namespace Test_EncryptionService
 		[Test]
 		public void Constructor_InvalidExistingData_IsEncryptorInfo_False () {
 			byte [] existingBytes = new byte[] {0x65, 0x56, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10, 0x11, 0x12, 0x13, 0x14, 0x16, 0x15};
-			EncryptorInfo bad;
 			Assert.Throws<ArgumentException> (() => new EncryptorInfo(existingBytes),"A10:");
-
 		}
 
 
@@ -228,6 +227,76 @@ namespace Test_EncryptionService
 			byte[] bytes = encryptor.GetBytes();
 			Assert.AreNotEqual(bytes, asBytes, "A20:  The 2 arrays should have not been equal.");
 			Assert.AreEqual(origBytes,bytes,"A30: The underlying byte array for EncryptorInfo should never be able to be changed externally");
+
+		}
+
+
+
+		// Ensure the IVDateTime Function has not changed and returns the correct data.
+		[TestCase("A - 2021/01/11 22:14:45",637460000850000000, 1275225934190000000)]
+		[TestCase("B - 2023/12/10 10:14:12", 638378000520000000, 1311488430140000000)]
+		[TestCase("C - 2027/07/16 2:33:57", 639513020370000000, 1309467265410000000)]
+		[TestCase("D - 2036/08/05 7:01:04", 642371292640000000, 1295914718210000000)]
+		[TestCase("E - 2052/04/27 15:30:45", 647649774450000000, 1321074699150000000)]
+		[Test]
+		public void GetIVDateTime_Success (string caseName, long origTicks, long expectedIVTicks) {
+			EncryptorInfo encryptor = new EncryptorInfo();
+			encryptor.LastUpdated = new DateTime(origTicks);
+
+			DateTime ivDateTime = encryptor.GetIvDateTime();
+
+			long tickIV = ivDateTime.Ticks;
+
+			Assert.AreEqual(expectedIVTicks, tickIV, "A10: Case Failed [" + caseName + "]");
+		}
+
+
+		[Test]
+		public void GetIV_Success () {
+			// Setup
+			byte[] ivBytes = new byte[16];
+
+			EncryptorInfo encryptor = new EncryptorInfo();
+			encryptor.LastUpdated = DateTime.Now;
+			DateTime ivDateTime = encryptor.GetIvDateTime();
+
+
+			// Build the IV as we expect it.
+			// Get New Computed IV Time Value and add to buffer.
+			byte[] time = BitConverter.GetBytes(ivDateTime.Ticks);
+			Buffer.BlockCopy(time, 0, ivBytes, 0, 8);
+
+
+			// Now get LastUpdated and copy it to buffer
+			byte[] lastupTime = BitConverter.GetBytes(encryptor.LastUpdated.Ticks);
+			Buffer.BlockCopy(lastupTime, 0, ivBytes, 8, 8);
+
+			byte [] recBytes = encryptor.GetIV();
+			Assert.AreEqual(ivBytes,recBytes,"A10:  The IV value is incorrect.");
+		}
+
+
+		[Test]
+		public void Constructor_WithSpan () {
+			// Setup - Create an encryptor
+			EncryptorInfo encryptor = new EncryptorInfo();
+			encryptor.KeyName = "abGT";
+			encryptor.Version = 1;
+			encryptor.LastUpdated = DateTime.Now;
+
+
+			byte[] createdEncryptorBytes = encryptor.GetAsBytes();
+			Span<byte> spanCreatedEncryptoBytes = new Span<byte>(createdEncryptorBytes);
+			
+			// Test - Create a new encryptor from the existing.
+			EncryptorInfo newEncryptorInfo = new EncryptorInfo(spanCreatedEncryptoBytes);
+
+			// Validate
+			Assert.AreEqual(encryptor.RecordIdentifier, newEncryptorInfo.RecordIdentifier, "A10:");
+			Assert.AreEqual(encryptor.KeyName, newEncryptorInfo.KeyName, "A20:");
+			Assert.AreEqual(encryptor.Version, newEncryptorInfo.Version, "A30:");
+			Assert.AreEqual(encryptor.LastUpdated, newEncryptorInfo.LastUpdated, "A40:");
+			Assert.AreEqual(true, newEncryptorInfo.IsEncryptorInfo, "A100:");
 
 		}
 	}

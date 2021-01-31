@@ -2,11 +2,12 @@
 using System.Text;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
+using SlugEnt.Encryption.Common;
 using SlugEnt.VaultEncryptor;
 
 namespace Test_EncryptionService {
 	[TestFixture]
-	public class Test_VaultEncryptor {
+	public class Test_EncryptionProcessor {
 
 		// Confirms that the Bit Size is 256.
 		[Test]
@@ -14,10 +15,8 @@ namespace Test_EncryptionService {
 		{
 			// Setup
 			// Test
-			VaultEncryptor vaultEncryptor = new VaultEncryptor();
-
 			// Validate
-			Assert.AreEqual(256,vaultEncryptor.BitSize,"A10:");
+			Assert.AreEqual(256,EncryptionConstants.BIT_SIZE,"A10:");
 		}
 
 
@@ -27,30 +26,26 @@ namespace Test_EncryptionService {
 		{
 			// Setup
 			// Test
-			VaultEncryptor vaultEncryptor = new VaultEncryptor();
-
 			// Validate
-			Assert.AreEqual(32, vaultEncryptor.ByteSize, "A10:");
+			Assert.AreEqual(32, EncryptionConstants.BYTE_SIZE, "A10:");
 		}
 
 
-		/*
+		
 		// Tests that The IV Size is 16
 		[Test]
 		public void IVSize_Correct()
 		{
 			// Setup
 			// Test
-			VaultEncryptor vaultEncryptor = new VaultEncryptor();
-
 			// Validate
-			Assert.AreEqual(16, vaultEncryptor.IVSize, "A10:");
+			Assert.AreEqual(16, EncryptionConstants.IV_SIZE, "A10:");
 		}
-*/
+
 
 
 		/// <summary>
-		/// KeyName must be of exact size.
+		/// KeyNameShort must be of exact size.
 		/// </summary>
 		[Test]
 		public void EncryptDecrypt_InvalidKeyNameSize_Throws () {
@@ -66,14 +61,14 @@ namespace Test_EncryptionService {
 
 
 			// Test
-			VaultEncryptor vaultEncryptor = new VaultEncryptor();
+			EncryptionProcessor encryptionProcessor = new EncryptionProcessor();
 
 			// Validation
-			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, secretBytes,  data),"A10:");
+			Assert.Throws<ArgumentException>(() => encryptionProcessor.EncryptWithStoredIV(keyName, secretBytes,  data),"A10:");
 
 			// Validate proper argument exception
 			string fieldName = "characters in length";
-			try { vaultEncryptor.Encrypt(keyName, secretBytes, data); }
+			try { encryptionProcessor.EncryptWithStoredIV(keyName, secretBytes, data); }
 			catch (ArgumentException e)
 			{
 				Assert.IsTrue(e.Message.Contains(fieldName));
@@ -87,7 +82,7 @@ namespace Test_EncryptionService {
 
 
 		/// <summary>
-		/// KeyName must not be empty.
+		/// KeyNameShort must not be empty.
 		/// </summary>
 		[Test]
 		public void EncryptDecrypt_Empty_KeyName_Throws()
@@ -104,14 +99,14 @@ namespace Test_EncryptionService {
 
 
 			// Test
-			VaultEncryptor vaultEncryptor = new VaultEncryptor();
+			EncryptionProcessor encryptionProcessor = new EncryptionProcessor();
 
 			// Validation
-			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, secretBytes, data), "A10:");
+			Assert.Throws<ArgumentException>(() => encryptionProcessor.EncryptWithStoredIV(keyName, secretBytes, data), "A10:");
 
 			// Validate proper argument exception
 			string fieldName = "[keyName]";
-			try { vaultEncryptor.Encrypt(keyName, secretBytes, data); }
+			try { encryptionProcessor.EncryptWithStoredIV(keyName, secretBytes, data); }
 			catch ( ArgumentException e ) {
 				Assert.IsTrue(e.Message.Contains(fieldName));
 				return;
@@ -124,7 +119,7 @@ namespace Test_EncryptionService {
 
 
 		/// <summary>
-		/// KeyName must not be null
+		/// KeyNameShort must not be null
 		/// </summary>
 		[Test]
 		public void EncryptDecrypt_Null_KeyName_Throws()
@@ -141,15 +136,15 @@ namespace Test_EncryptionService {
 
 
 			// Test
-			VaultEncryptor vaultEncryptor = new VaultEncryptor();
+			EncryptionProcessor encryptionProcessor = new EncryptionProcessor();
 
 			// Validation
-			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, secretBytes, data), "A10:");
+			Assert.Throws<ArgumentException>(() => encryptionProcessor.EncryptWithStoredIV(keyName, secretBytes, data), "A10:");
 
 
 			// Validate proper argument exception
 			string fieldName = "[keyName]";
-			try { vaultEncryptor.Encrypt(keyName, secretBytes,  data); }
+			try { encryptionProcessor.EncryptWithStoredIV(keyName, secretBytes,  data); }
 			catch (ArgumentException e)
 			{
 				Assert.IsTrue(e.Message.Contains(fieldName));
@@ -183,20 +178,20 @@ namespace Test_EncryptionService {
 
 
 			// Test
-			VaultEncryptor vaultEncryptor = new VaultEncryptor();
+			EncryptionProcessor vaultEncryptor = new EncryptionProcessor();
 
 			// Validation
 			// A. Properly sized IV passes.
-			byte[]encrypted = vaultEncryptor.Encrypt(keyName, secretBytes,  data);
+			byte[]encrypted = vaultEncryptor.EncryptWithStoredIV(keyName, secretBytes,  data);
 			Assert.GreaterOrEqual(encrypted.Length,0,"A10:  Encryption failed.  This should have succeeded.");
 
 			// B. Now Invalid IV
-			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, secretBytes,  data), "A20:");
+			Assert.Throws<ArgumentException>(() => vaultEncryptor.EncryptWithStoredIV(keyName, secretBytes,  data), "A20:");
 
 			
 			// Validate proper argument exception
 			string fieldName = "[iv]";
-			try { vaultEncryptor.Encrypt(keyName, secretBytes, data); }
+			try { vaultEncryptor.EncryptWithStoredIV(keyName, secretBytes, data); }
 			catch (ArgumentException e)
 			{
 				Assert.IsTrue(e.Message.Contains(fieldName));
@@ -229,20 +224,20 @@ namespace Test_EncryptionService {
 
 
 			// Test
-			VaultEncryptor vaultEncryptor = new VaultEncryptor();
+			EncryptionProcessor encryptionProcessor = new EncryptionProcessor();
 
 			// Validation
 			// A. Properly sized Secret passes.
-			byte[] encrypted = vaultEncryptor.Encrypt(keyName, validSecretBytes, data);
+			byte[] encrypted = encryptionProcessor.EncryptWithStoredIV(keyName, validSecretBytes, data);
 			Assert.Greater(encrypted.Length, 0, "A10:  Encryption failed.  This should have succeeded.");
 
 			// B. Now Invalid Secret
-			Assert.Throws<ArgumentException>(() => vaultEncryptor.Encrypt(keyName, inValidSecretBytes,  data), "A20:");
+			Assert.Throws<ArgumentException>(() => encryptionProcessor.EncryptWithStoredIV(keyName, inValidSecretBytes,  data), "A20:");
 
 
 			// Validate proper argument exception
 			string fieldName = "[secret]";
-			try { vaultEncryptor.Encrypt(keyName, inValidSecretBytes, data); }
+			try { encryptionProcessor.EncryptWithStoredIV(keyName, inValidSecretBytes, data); }
 			catch (ArgumentException e)
 			{
 				Assert.IsTrue(e.Message.Contains(fieldName));
@@ -271,10 +266,10 @@ namespace Test_EncryptionService {
 
 
 			// Test
-			VaultEncryptor vaultEncryptor = new VaultEncryptor();
-			byte[] encryptedData = vaultEncryptor.Encrypt(keyName, validSecretBytes, data);
+			EncryptionProcessor encryptionProcessor = new EncryptionProcessor();
+			byte[] encryptedData = encryptionProcessor.EncryptWithStoredIV(keyName, validSecretBytes, data);
 
-			vaultEncryptor.Decrypt(keyName, validSecretBytes, encryptedData);
+			encryptionProcessor.DecryptWithStoredIV(keyName, validSecretBytes, encryptedData);
 			// Validate
 			Assert.NotZero(encryptedData.Length,"A10:");
 			Assert.Greater(encryptedData.Length,data.Length, "A20:");
@@ -293,13 +288,59 @@ namespace Test_EncryptionService {
 			byte[] dataBytes = Encoding.ASCII.GetBytes(data);
 
 			//validIVBytes = null;
-			VaultEncryptor vaultEncryptor = new VaultEncryptor();
-			byte[] enc = vaultEncryptor.Encrypt(keyName,validSecretBytes,data);
-			//byte[] enc = vaultEncryptor.Encrypt3();
+			EncryptionProcessor encryptionProcessor = new EncryptionProcessor();
+			byte[] enc = encryptionProcessor.EncryptWithStoredIV(keyName,validSecretBytes,data);
+			//byte[] enc = encryptionProcessor.Encrypt3();
 
-			string dec = vaultEncryptor.Decrypt(keyName, validSecretBytes,enc);
+			string dec = encryptionProcessor.DecryptWithStoredIV(keyName, validSecretBytes,enc);
 			Assert.AreEqual(data,dec,"A10:");
-			//vaultEncryptor.Decrypt3(enc);
+			//encryptionProcessor.Decrypt3(enc);
 		}
+
+
+
+
+
+		/// <summary>
+		/// Encryption Should succeed.  Everything is correct.
+		/// </summary>
+		[Test]
+		public void EncryptDecrypt_Span_Success()
+		{
+			// Setup
+			ushort version = 2; 
+			string keyID = "ABCD";
+			DateTime LastUpdated = DateTime.Now;
+			
+
+			string keyName = "ABCDEFGHIJKLMNOP";
+			string validSecret = "abcDEFGHijklmnopqrstuvwxyz123456";
+			string data = "something to encrypt is written here so do it NOW";
+
+			byte[] validSecretBytes = Encoding.ASCII.GetBytes(validSecret);
+			byte[] dataBytes = Encoding.ASCII.GetBytes(data);
+
+			// Test
+			EncryptorInfo encryptorInfo = new EncryptorInfo();
+			encryptorInfo.LastUpdated = LastUpdated;
+			encryptorInfo.KeyName = keyID;
+			encryptorInfo.Version = version;
+			EncryptionProcessor encryptionProcessor = new EncryptionProcessor();
+
+			
+			byte[] encryptedData = encryptionProcessor.Encrypt(encryptorInfo,validSecretBytes,data);
+
+			string msg = encryptionProcessor.Decrypt(validSecretBytes, encryptedData);
+			Assert.AreEqual(data,msg,"A10:  Encrypted contents are invalid:");
+
+			//encryptionProcessor.DecryptWithStoredIV(keyName, validSecretBytes, encryptedData);
+			// Validate
+			Assert.NotZero(encryptedData.Length, "A10:");
+			Assert.Greater(encryptedData.Length, data.Length, "A20:");
+		}
+
+
+
+		
 	}
 }

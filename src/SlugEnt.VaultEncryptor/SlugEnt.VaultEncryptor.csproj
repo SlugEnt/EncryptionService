@@ -2,7 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <AssemblyVersion>1.0.0.68</AssemblyVersion>
+    <AssemblyVersion>1.0.0.85</AssemblyVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SlugEnt.Encryption.Common\SlugEnt.Encryption.Common.csproj" />
+  </ItemGroup>
 
 </Project>

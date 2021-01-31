@@ -9,8 +9,7 @@ using System.Text;
 
 namespace SlugEnt.VaultEncryptor
 {
-
-	internal class EncryptorInfo {
+	public class EncryptorInfo {
 		internal const short STORAGE_LEN = 16;
 		internal const short RECORD_IDENTIFIER_START = 0;
 		internal const short RECORD_IDENTIFIER_LEN = 2;
@@ -22,7 +21,7 @@ namespace SlugEnt.VaultEncryptor
 		internal const short TIME_LENGTH = 8;
 
 		internal const ushort RECORD_IDENTIFIER_VALUE = 43275;		// The Record identifier as an unsigned short
-
+		internal const short IV_SIZE = 16;
 		internal byte [] _storage;
 		
 
@@ -30,7 +29,7 @@ namespace SlugEnt.VaultEncryptor
 		/// Constructs an EncryptorInfo object from an existing data stream.
 		/// </summary>
 		/// <param name="existingObject"></param>
-		internal EncryptorInfo (byte[] existingObject) {
+		public EncryptorInfo (byte[] existingObject) {
 			// Copy the passed in buffer to _storage
 			_storage = new byte[STORAGE_LEN];
 			Buffer.BlockCopy(existingObject,0,_storage,0,STORAGE_LEN);
@@ -41,11 +40,27 @@ namespace SlugEnt.VaultEncryptor
 		}
 
 
+		/// <summary>
+		/// Constructs an EncryptorInfo object from an existing data stream.
+		/// </summary>
+		/// <param name="existingObject"></param>
+		public EncryptorInfo(ReadOnlySpan<byte> existingObject)
+		{
+			// Copy the passed in buffer to _storage
+			//_storage = new byte[STORAGE_LEN];
+			_storage = existingObject.Slice(0, STORAGE_LEN).ToArray();
+			//Buffer.BlockCopy(existingObject, 0, _storage, 0, STORAGE_LEN);
+
+			// Ensure it is an EncryptorInfo object
+			if (RecordIdentifier == RECORD_IDENTIFIER_VALUE) IsEncryptorInfo = true;
+			else throw new ArgumentException("existingObject is not an EncryptorInfo data object.");
+		}
+
 
 		/// <summary>
 		/// Constructor to be used when one wants to create a new EncryptorInfo data object
 		/// </summary>
-		internal EncryptorInfo () {
+		public EncryptorInfo () {
 			_storage = new byte[STORAGE_LEN];
 
 			// Set RecordIdentifier.
@@ -157,6 +172,42 @@ namespace SlugEnt.VaultEncryptor
 		/// <returns></returns>
 		public byte [] GetBytes () {
 			return _storage;
+		}
+
+
+		/// <summary>
+		/// Computes the IV.
+		/// </summary>
+		/// <returns></returns>
+		public byte [] GetIV () {
+			// IV is stored as:  ivDateTime and then LastUpdated
+			byte[] ivBytes = new byte[IV_SIZE];
+
+			// Copy LastUpdated to IV first 8 bytes
+
+			// Get New Computed IV Time Value and add to buffer.
+			DateTime ivDateTime = GetIvDateTime();
+			byte[] time = BitConverter.GetBytes(ivDateTime.Ticks);
+			Buffer.BlockCopy(time, 0, ivBytes, 0,8);
+
+			// Now get LastUpdated and copy it to buffer
+			Buffer.BlockCopy(_storage,TIME_START,ivBytes,8,8);
+			return ivBytes;
+		}
+
+
+
+		/// <summary>
+		/// Computes the randomized IV DateTime Component 
+		/// </summary>
+		/// <returns></returns>
+		internal DateTime GetIvDateTime () {
+			DateTime computeDateTime;
+			int newYear = LastUpdated.Year * 2;
+			newYear += LastUpdated.Month * LastUpdated.Day - LastUpdated.Day;
+			int newSeconds = LastUpdated.Second * LastUpdated.Day;
+			computeDateTime = new DateTime(newYear, LastUpdated.Month, LastUpdated.Day, LastUpdated.Hour, LastUpdated.Second, LastUpdated.Minute).AddSeconds(-1 * (LastUpdated.Day * LastUpdated.Second));
+			return computeDateTime;
 		}
 	}
 }

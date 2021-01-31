@@ -5,7 +5,7 @@
 
     <IsPackable>false</IsPackable>
 
-    <AssemblyVersion>1.0.0.91</AssemblyVersion>
+    <AssemblyVersion>1.0.0.121</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\SlugEnt.Encryption.Common\SlugEnt.Encryption.Common.csproj" />
     <ProjectReference Include="..\..\src\SlugEnt.EncryptionService\SlugEnt.EncryptionService.csproj" />
     <ProjectReference Include="..\..\src\SlugEnt.VaultEncryptor\SlugEnt.VaultEncryptor.csproj" />
   </ItemGroup>
