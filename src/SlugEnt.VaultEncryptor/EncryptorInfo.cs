@@ -9,6 +9,9 @@ using System.Text;
 
 namespace SlugEnt.VaultEncryptor
 {
+	/// <summary>
+	/// The header prefix added to encrypted data to identify the key, version of key and date written of the encrypted data.  All properties are Readonly after construction.
+	/// </summary>
 	public class EncryptorInfo {
 		internal const short STORAGE_LEN = 16;
 		internal const short RECORD_IDENTIFIER_START = 0;
@@ -80,7 +83,7 @@ namespace SlugEnt.VaultEncryptor
 			if (keyName.Length != EncryptorInfo.KEYNAME_LENGTH) throw new ArgumentException("KeyName must be exactly 4 characters");
 
 			System.Text.ASCIIEncoding encoding = new System.Text.ASCIIEncoding();
-			encoding.GetBytes(KeyName, 0, 4, _storage, KEYNAME_START);
+			encoding.GetBytes(keyName, 0, 4, _storage, KEYNAME_START);
 
 
 			// Store Version into Byte Array

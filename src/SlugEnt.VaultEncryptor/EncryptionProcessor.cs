@@ -62,34 +62,45 @@ namespace SlugEnt.VaultEncryptor
 
 
 		/// <summary>
-		/// Retrieves the secrt for the version requested.
+		/// Retrieves the secret for the version requested.
 		/// </summary>
 		/// <param name="keyName"></param>
 		/// <param name="version"></param>
 		/// <returns></returns>
-		internal ReadOnlySpan<byte> GetSecret (string keyName, ushort version = 0) {
+		internal EncryptionKeyVersioned GetEncryptionKeyVersioned (string keyName, ushort version = 0) {
 			// Do we have a KeyRing Entry for Keyname?
 			KeyRingMember keyRingMember;
 			bool exists = _keyRing.TryGetValue(keyName, out keyRingMember);
 			if (!exists) throw new ArgumentException("No KeyRing could be found with a KeyName of [" + keyName + "]");
 
-			if (version == 0 )
-				return keyRingMember.CurrentKey.Secret;
+			if ( version == 0 ) return keyRingMember.CurrentKey;
 
 			// Otherwise get the specific version requested.
 			EncryptionKeyVersioned encryptionKeyVersioned =  keyRingMember.GetVersion(version);
-			return encryptionKeyVersioned.Secret;
+			return encryptionKeyVersioned;
 		}
 
 
 		
-/*		public byte [] Encrypt (string keyName, string dataToEncrypt) {
-			// Get the Secret
+		public byte [] Encrypt (string keyName, string dataToEncrypt) {
+			// Get the Current EncryptionKeyVersioned object.  We always encrypt with the most current key.
+			EncryptionKeyVersioned encryptionKeyVersioned = GetEncryptionKeyVersioned(keyName);
+			
+			// Create Encryption Header Prefix object
+			EncryptorInfo encryptorInfo = new EncryptorInfo(keyName,encryptionKeyVersioned.Version, DateTime.Now);
 
-			//byte[] secret = 
+			// Build Encrypted Data Stream
+			// EncryptorInfo followed by Encrypted Data
+			byte[] headerBytes = encryptorInfo.GetBytes();
+			byte[] encryptedData = EncryptInternal(encryptionKeyVersioned.Secret, dataToEncrypt, encryptorInfo.GetIV());
 
+			byte[] fullRecordBytes = new byte[headerBytes.Length + encryptedData.Length];
+			Buffer.BlockCopy(headerBytes, 0, fullRecordBytes, 0, headerBytes.Length);
+			Buffer.BlockCopy(encryptedData, 0, fullRecordBytes, headerBytes.Length, encryptedData.Length);
+
+			return fullRecordBytes;
 		}
-*/
+
 
 		// Temporary
 		public byte [] Encrypt (EncryptorInfo encryptorInfo, byte[] secret, string dataToEncrypt) {
@@ -112,16 +123,19 @@ namespace SlugEnt.VaultEncryptor
 		/// <param name="secret"></param>
 		/// <param name="dataToDecrypt"></param>
 		/// <returns></returns>
-		public string Decrypt (byte [] secret, byte[] dataToDecrypt) {
+		public string Decrypt (byte[] dataToDecrypt) {
 			//byte [] encryptedBytes = Encoding.ASCII.GetBytes(dataToDecrypt);
 			Span<byte> spanEncryptedBytes = dataToDecrypt;
 
 			// First 16 bytes are the EncryptInfo header
-			//Span<byte> spanEncryptInfoBytes = spanEncryptedBytes.Slice(0, IVSize);
-			//EncryptorInfo encryptorInfo = new EncryptorInfo(spanEncryptInfoBytes);
+			Span<byte> spanEncryptInfoBytes = spanEncryptedBytes.Slice(0, EncryptorInfo.STORAGE_LEN);
+			EncryptorInfo encryptorInfo = new EncryptorInfo(spanEncryptInfoBytes);
 
+			// Get the EncryptionKeyVersioned Object
+			EncryptionKeyVersioned encryptionKeyVersioned = GetEncryptionKeyVersioned(encryptorInfo.KeyName, encryptorInfo.Version);
+			
 			//Span<byte> spanEncData = spanEncryptedBytes.Slice(IVSize);
-			return DecryptInternal(secret, dataToDecrypt);
+			return DecryptInternal(encryptionKeyVersioned.Secret, dataToDecrypt);
 		}
 
 
@@ -134,7 +148,7 @@ namespace SlugEnt.VaultEncryptor
 		/// <param name="dataToEncrypt">The encrypted data</param>
 		/// <param name="iv">The IV that the data was encrypted with</param>
 		/// <returns></returns>
-		private byte[] EncryptInternal(byte[] secret, string dataToEncrypt, byte[] iv)
+		private byte[] EncryptInternal(ReadOnlySpan<byte> secret, string dataToEncrypt, byte[] iv)
 		{
 			if (secret.Length != EncryptionConstants.BYTE_SIZE) throw new ArgumentException("The parameter [secret] is not of the exact size required - " + EncryptionConstants.BYTE_SIZE);
 			if (iv.Length != EncryptionConstants.IV_SIZE) throw new ArgumentException("The parameter [iv] is not of the exact size required - " + EncryptionConstants.IV_SIZE);
@@ -142,7 +156,7 @@ namespace SlugEnt.VaultEncryptor
 
 			//Create a new instance of the default Aes implementation class  and configure encryption key.  
 			using Aes aes = Aes.Create();
-			aes.Key = secret;
+			aes.Key = secret.ToArray();
 			aes.IV = iv;
 
 			using MemoryStream myStream = new MemoryStream();
@@ -172,7 +186,7 @@ namespace SlugEnt.VaultEncryptor
 		/// <param name="secret"></param>
 		/// <param name="encryptedData"></param>
 		/// <returns></returns>
-		private string DecryptInternal(byte[] secret, byte[] encryptedData)
+		private string DecryptInternal(ReadOnlySpan<byte> secret, byte[] encryptedData)
 		{
 			try
 			{
@@ -185,7 +199,7 @@ namespace SlugEnt.VaultEncryptor
 
 				//Create a new instance of the default Aes implementation class
 				using Aes aes = Aes.Create();
-				aes.Key = secret;
+				aes.Key = secret.ToArray();
 				aes.IV = encryptorInfo.GetIV();
 
 				

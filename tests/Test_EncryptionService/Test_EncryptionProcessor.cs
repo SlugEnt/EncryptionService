@@ -301,7 +301,7 @@ namespace Test_EncryptionService {
 
 
 
-
+		/*
 
 		/// <summary>
 		/// Encryption Should succeed.  Everything is correct.
@@ -319,7 +319,7 @@ namespace Test_EncryptionService {
 			string validSecret = "abcDEFGHijklmnopqrstuvwxyz123456";
 			string data = "something to encrypt is written here so do it NOW";
 
-			byte[] validSecretBytes = Encoding.ASCII.GetBytes(validSecret);
+			ReadOnlySpan<byte> validSecretBytes = Encoding.ASCII.GetBytes(validSecret);
 			byte[] dataBytes = Encoding.ASCII.GetBytes(data);
 
 			// Test
@@ -329,7 +329,7 @@ namespace Test_EncryptionService {
 			
 			byte[] encryptedData = encryptionProcessor.Encrypt(encryptorInfo,validSecretBytes,data);
 
-			string msg = encryptionProcessor.Decrypt(validSecretBytes, encryptedData);
+			string msg = encryptionProcessor.Decrypt(encryptedData);
 			Assert.AreEqual(data,msg,"A10:  Encrypted contents are invalid:");
 
 			//encryptionProcessor.DecryptWithStoredIV(keyName, validSecretBytes, encryptedData);
@@ -337,11 +337,11 @@ namespace Test_EncryptionService {
 			Assert.NotZero(encryptedData.Length, "A10:");
 			Assert.Greater(encryptedData.Length, data.Length, "A20:");
 		}
-
+		*/
 
 		// Validate we can retrieve a Secret of the requested version.
 		[Test]
-		public void GetSecret_Success () {
+		public void GetEncryptionKeyVersioned_Success () {
 			// Setup
 			Guid appID = Guid.NewGuid();
 			string KeyName = "abcd";
@@ -367,12 +367,38 @@ namespace Test_EncryptionService {
 
 			// Test
 			// Now Retrieve requested object
-			ReadOnlySpan<byte> secret = encryptionProcessor.GetSecret(enc1.KeyNameShort, 5000);
+			EncryptionKeyVersioned encryptionKeyVersioned = encryptionProcessor.GetEncryptionKeyVersioned(enc1.KeyNameShort, 5000);
+			ReadOnlySpan<byte> secret = encryptionKeyVersioned.Secret;
 
 			// Validate
 			Assert.AreEqual(enc5.Secret.ToArray(), secret.ToArray(), "A10: Secrets are not the same");
 		}
 
-		
+
+
+		// Validate entire Add KeyRing, Add EncryptionKeyVersioned, Encrypt Data, Decrypt Data.  With just a single EncryptionKeyVersioned object in KeyRing
+		[Test]
+		public void EncryptDecrypt_Simple_Success () {
+			// Setup
+			Guid appID = Guid.NewGuid();
+			string KeyName = "1969";
+			TimeUnit ttl = new TimeUnit("3w");
+			string data = "The first encryption data message!";
+
+			// Create a number of EncryptionKeyVersioned objects.
+			EncryptionKeyVersioned enc1 = new EncryptionKeyVersioned(appID, KeyName, ttl);
+
+
+			// Test
+			EncryptionProcessor encryptionProcessor = new EncryptionProcessor();
+			encryptionProcessor.LoadEncyptionKey(enc1);
+			byte[] dataEncrypted = encryptionProcessor.Encrypt(KeyName, data);
+
+			// Validate
+			string dataDecrypted = encryptionProcessor.Decrypt(dataEncrypted);
+
+			Assert.AreEqual(data, dataDecrypted,"A10: ");
+		}
+
 	}
 }
