@@ -19,6 +19,7 @@ namespace SlugEnt.VaultEncryptor
 			_versionedKeys = new Dictionary<ushort, EncryptionKeyVersioned>();
 			_versionedKeys.Add(encryptionKeyVersioned.Version,encryptionKeyVersioned);
 			CurrentKey = encryptionKeyVersioned;
+			CurrentVersionNumber = encryptionKeyVersioned.Version;
 		}
 
 
@@ -48,12 +49,34 @@ namespace SlugEnt.VaultEncryptor
 		/// <returns></returns>
 		public EncryptionKeyVersioned GetVersion (ushort versionNumber) {
 			EncryptionKeyVersioned foundKey;
-			if ( !_versionedKeys.TryGetValue(versionNumber, out foundKey) ) {
+			if (! _versionedKeys.TryGetValue(versionNumber, out foundKey)) {
 				throw new ArgumentException("Unable to find EncryptionKeyVersioned object for KeyName [" + KeyName + "] with the version number: [" + versionNumber + "]");
 			}
 
 			return foundKey;
 
+		}
+
+
+
+		/// <summary>
+		/// Inserts the provided EncryptionKeyVersioned object into the keyring.  If it is newer than the current one, then it is made the current.
+		/// </summary>
+		/// <param name="encryptionKeyVersioned"></param>
+		public void InsertVersion (EncryptionKeyVersioned encryptionKeyVersioned) {
+			// Insert if it does not already exist in the dictionary.
+			if (!_versionedKeys.TryAdd(encryptionKeyVersioned.Version, encryptionKeyVersioned))
+			{
+				//throw new ArgumentException("The EncryptionKeyVersioned object insertion failed, because it already exists in the KeyRing");
+				// TODO add logging method.
+			}
+
+
+			// Determine if this is a new current - If Version > current then it is a new current.
+			if ( this.CurrentVersionNumber < encryptionKeyVersioned.Version ) {
+				CurrentKey = encryptionKeyVersioned;
+				CurrentVersionNumber = encryptionKeyVersioned.Version;
+			}
 		}
 
 
@@ -70,6 +93,17 @@ namespace SlugEnt.VaultEncryptor
 			if ( !success ) return null;
 			return output;
 		}
+
+
+		/// <summary>
+		/// For Unit Testing Only - Returns the Dictionary.
+		/// </summary>
+		/// <returns></returns>
+		internal IReadOnlyDictionary<ushort, EncryptionKeyVersioned> UT_VersionKeyDict () {
+			return _versionedKeys;
+		}
+
+
 		#endregion
 	}
 }

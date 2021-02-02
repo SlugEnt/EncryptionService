@@ -47,34 +47,49 @@ namespace SlugEnt.VaultEncryptor
 		/// </summary>
 		/// <param name="encryptionKeyVersioned"></param>
 		internal void LoadEncyptionKey (EncryptionKeyVersioned encryptionKeyVersioned) {
-			// 1st see if KeyName exists
+			// 1st see if KeyName exists.  If not add it which also adds the EncryptionKeyVersioned object
 			KeyRingMember member;
 			if ( !_keyRing.TryGetValue(encryptionKeyVersioned.KeyNameShort, out member) ) {
 				member = new KeyRingMember(encryptionKeyVersioned);
 				_keyRing.TryAdd(member.KeyName, member);
 			}
-			
-			
+			else {
+				// Add the EncryptionKeyVersioned.
+				member.InsertVersion(encryptionKeyVersioned);
+			}
 		}
 
 
+
+		/// <summary>
+		/// Retrieves the secrt for the version requested.
+		/// </summary>
+		/// <param name="keyName"></param>
+		/// <param name="version"></param>
+		/// <returns></returns>
 		internal ReadOnlySpan<byte> GetSecret (string keyName, ushort version = 0) {
 			// Do we have a KeyRing Entry for Keyname?
 			KeyRingMember keyRingMember;
 			bool exists = _keyRing.TryGetValue(keyName, out keyRingMember);
 			if (!exists) throw new ArgumentException("No KeyRing could be found with a KeyName of [" + keyName + "]");
 
-			// For Encryption we ALWAYS use current version.
-			return keyRingMember.CurrentKey.Secret;
+			if (version == 0 )
+				return keyRingMember.CurrentKey.Secret;
+
+			// Otherwise get the specific version requested.
+			EncryptionKeyVersioned encryptionKeyVersioned =  keyRingMember.GetVersion(version);
+			return encryptionKeyVersioned.Secret;
 		}
 
-		/*
-		public byte [] Encrypt (string keyName, string dataToEncrypt) {
+
+		
+/*		public byte [] Encrypt (string keyName, string dataToEncrypt) {
 			// Get the Secret
+
 			//byte[] secret = 
 
-		}*/
-
+		}
+*/
 
 		// Temporary
 		public byte [] Encrypt (EncryptorInfo encryptorInfo, byte[] secret, string dataToEncrypt) {

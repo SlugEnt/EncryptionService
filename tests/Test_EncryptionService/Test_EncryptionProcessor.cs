@@ -2,7 +2,9 @@
 using System.Text;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
+using SlugEnt;
 using SlugEnt.Encryption.Common;
+using SlugEnt.EncryptionService;
 using SlugEnt.VaultEncryptor;
 
 namespace Test_EncryptionService {
@@ -321,10 +323,7 @@ namespace Test_EncryptionService {
 			byte[] dataBytes = Encoding.ASCII.GetBytes(data);
 
 			// Test
-			EncryptorInfo encryptorInfo = new EncryptorInfo();
-			encryptorInfo.LastUpdated = LastUpdated;
-			encryptorInfo.KeyName = keyID;
-			encryptorInfo.Version = version;
+			EncryptorInfo encryptorInfo = new EncryptorInfo(keyID,version,LastUpdated);
 			EncryptionProcessor encryptionProcessor = new EncryptionProcessor();
 
 			
@@ -340,6 +339,39 @@ namespace Test_EncryptionService {
 		}
 
 
+		// Validate we can retrieve a Secret of the requested version.
+		[Test]
+		public void GetSecret_Success () {
+			// Setup
+			Guid appID = Guid.NewGuid();
+			string KeyName = "abcd";
+			TimeUnit ttl = new TimeUnit("3d");
+			ushort updatedVersionNumber = 2454;
+
+			// Create a number of EncryptionKeyVersioned objects.
+			EncryptionKeyVersioned enc1 = new EncryptionKeyVersioned(appID, KeyName, ttl);
+			EncryptionKeyVersioned enc2 = enc1.NewVersion();
+			EncryptionKeyVersioned enc3 = enc2.NewVersion();
+			EncryptionKeyVersioned enc4 = enc3.NewVersion(4000);
+			EncryptionKeyVersioned enc5 = enc4.NewVersion(5000);
+			EncryptionKeyVersioned enc6 = enc5.NewVersion(6000);
+
+			// Add to the EncryptionProcessor Keyring
+			EncryptionProcessor encryptionProcessor = new EncryptionProcessor();
+			encryptionProcessor.LoadEncyptionKey(enc1);
+			encryptionProcessor.LoadEncyptionKey(enc2);
+			encryptionProcessor.LoadEncyptionKey(enc3);
+			encryptionProcessor.LoadEncyptionKey(enc4);
+			encryptionProcessor.LoadEncyptionKey(enc5);
+			encryptionProcessor.LoadEncyptionKey(enc6);
+
+			// Test
+			// Now Retrieve requested object
+			ReadOnlySpan<byte> secret = encryptionProcessor.GetSecret(enc1.KeyNameShort, 5000);
+
+			// Validate
+			Assert.AreEqual(enc5.Secret.ToArray(), secret.ToArray(), "A10: Secrets are not the same");
+		}
 
 		
 	}

@@ -26,7 +26,7 @@ namespace SlugEnt.VaultEncryptor
 		
 
 		/// <summary>
-		/// Constructs an EncryptorInfo object from an existing data stream.
+		/// Constructs an EncryptorInfo object from an existing data stream.  COPYING the stream into its internal memory.
 		/// </summary>
 		/// <param name="existingObject"></param>
 		public EncryptorInfo (byte[] existingObject) {
@@ -41,15 +41,13 @@ namespace SlugEnt.VaultEncryptor
 
 
 		/// <summary>
-		/// Constructs an EncryptorInfo object from an existing data stream.
+		/// Constructs an EncryptorInfo object from an existing data stream.  Stores Reference pointer for the Byte Array.
 		/// </summary>
 		/// <param name="existingObject"></param>
 		public EncryptorInfo(ReadOnlySpan<byte> existingObject)
 		{
 			// Copy the passed in buffer to _storage
-			//_storage = new byte[STORAGE_LEN];
 			_storage = existingObject.Slice(0, STORAGE_LEN).ToArray();
-			//Buffer.BlockCopy(existingObject, 0, _storage, 0, STORAGE_LEN);
 
 			// Ensure it is an EncryptorInfo object
 			if (RecordIdentifier == RECORD_IDENTIFIER_VALUE) IsEncryptorInfo = true;
@@ -57,15 +55,41 @@ namespace SlugEnt.VaultEncryptor
 		}
 
 
+
 		/// <summary>
-		/// Constructor to be used when one wants to create a new EncryptorInfo data object
+		/// Constructor - only used internally.
 		/// </summary>
-		public EncryptorInfo () {
+		internal EncryptorInfo () {
 			_storage = new byte[STORAGE_LEN];
 
 			// Set RecordIdentifier.
 			SetRecordIdentifier();
 			IsEncryptorInfo = true;
+		}
+
+
+		/// <summary>
+		/// Constructor to be used when one wants to create a new EncryptorInfo data object
+		/// <param name="KeyName">The short 4 character keyname.</param>
+		/// <param name="version">The version number of the key used to encrypt the data</param>
+		/// <param name="updatedAt">The DateTime this header was created at.  Null defaults to current DateTime.</param>
+		/// </summary>
+		public EncryptorInfo (string keyName, ushort version, DateTime updatedAt) : this() {
+			// Store KeyName into Byte Array
+			if (keyName == null) throw new ArgumentException("KeyName cannot be null");
+			if (keyName.Length != EncryptorInfo.KEYNAME_LENGTH) throw new ArgumentException("KeyName must be exactly 4 characters");
+
+			System.Text.ASCIIEncoding encoding = new System.Text.ASCIIEncoding();
+			encoding.GetBytes(KeyName, 0, 4, _storage, KEYNAME_START);
+
+
+			// Store Version into Byte Array
+			byte[] shortened = BitConverter.GetBytes(version);
+			Buffer.BlockCopy(shortened, 0, _storage, VER_START, 2);
+
+			// Store LastUpdated
+			byte[] time = BitConverter.GetBytes(updatedAt.Ticks);
+			Buffer.BlockCopy(time, 0, _storage, TIME_START, 8);
 		}
 
 
@@ -106,50 +130,31 @@ namespace SlugEnt.VaultEncryptor
 		/// <summary>
 		/// The KeyName is the unique 4 character identifier that tells the system what Key was used to encrypt this data.
 		/// </summary>
-		internal string KeyName {
+		public string KeyName {
 			get {
 				return Encoding.ASCII.GetString(_storage, KEYNAME_START, KEYNAME_LENGTH);
 			}
-			set {
-				if (value == null) throw new ArgumentException("KeyName cannot be null");
-				if (value.Length != EncryptorInfo.KEYNAME_LENGTH) throw new ArgumentException("KeyName must be exactly 4 characters");
-
-				System.Text.ASCIIEncoding encoding = new System.Text.ASCIIEncoding();
-				encoding.GetBytes(value, 0, 4, _storage, KEYNAME_START);
-			}
 		}
+
+
 
 
 		/// <summary>
 		/// The version of the KeyName that this data was encrypted with.
 		/// </summary>
-		internal ushort Version {
+		public ushort Version {
 			get {
 				ushort[] shortened = new ushort[1];
 				Buffer.BlockCopy(_storage,VER_START,shortened,0,2);
 				return shortened [0];
-
-				// Alternative means, but supposedly above is faster.  Have not tested myself.
-				// return BitConverter.ToUInt16(_storage, VER_START);
-			}
-			set {
-				byte [] shortened = BitConverter.GetBytes(value);
-				Buffer.BlockCopy(shortened,0,_storage,VER_START,2);
 			}
 		}
 
 
-		internal DateTime LastUpdated {
+		public DateTime LastUpdated {
 			get {
-				//DateTime[] time = new DateTime[1];
 				DateTime dateTime = DateTime.FromBinary(BitConverter.ToInt64(_storage, TIME_START));
-				//Buffer.BlockCopy(_storage, TIME_START, time, 0, 8);
 				return dateTime;
-			}
-
-			set {
-				byte[] time = BitConverter.GetBytes(value.Ticks);
-				Buffer.BlockCopy(time, 0, _storage, TIME_START,8);
 			}
 		}
 

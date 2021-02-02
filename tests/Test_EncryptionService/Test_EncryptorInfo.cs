@@ -20,10 +20,15 @@ namespace Test_EncryptionService
 		[Test]
 		public void KeyName_IncorrectSize_Throws (string keyName) {
 			// Setup
-			EncryptorInfo encryptorInfo = new EncryptorInfo();
+			ushort version = 3;
+			DateTime updatedAt = DateTime.Now;
+
+			EncryptorInfo encryptorInfo;
+				
 
 			// Test & Validate
-			Assert.Throws<ArgumentException>( () => encryptorInfo.KeyName = keyName,"A10:  Should have thrown an Argument Exception");
+			ArgumentException ex =  Assert.Throws<ArgumentException>( () => new EncryptorInfo(keyName, version, updatedAt) ,"A10:  Should have thrown an Argument Exception");
+			Assert.IsTrue(ex.Message.Contains("KeyName must be exactly 4 characters"));
 		}
 
 
@@ -34,14 +39,15 @@ namespace Test_EncryptionService
 		public void KeyName_Success () {
 			// Setup
 			string keyName = "ABCd";
-			EncryptorInfo encryptorInfo  = new EncryptorInfo();
+			ushort version = 3;
+			DateTime updatedAt = DateTime.Now;
+
+			EncryptorInfo encryptorInfo  = new EncryptorInfo(keyName,version,updatedAt);
 			Byte[] original = new byte[EncryptorInfo.STORAGE_LEN];
 			Buffer.BlockCopy(encryptorInfo._storage, 0, original, 0, EncryptorInfo.STORAGE_LEN);
 
 
 			// Test
-			encryptorInfo.KeyName = keyName;
-
 			// Validate
 			Assert.AreEqual(keyName,encryptorInfo.KeyName,"A10:");
 
@@ -70,14 +76,15 @@ namespace Test_EncryptionService
 		[Test]
 		public void Version_Success (ushort version) {
 			// Setup
-			EncryptorInfo encryptorInfo = new EncryptorInfo();
+			string keyName = "abcd";
+			DateTime updatedAt = DateTime.Now;
+
+			EncryptorInfo encryptorInfo = new EncryptorInfo(keyName,version,updatedAt);
 			Byte[] original = new byte[EncryptorInfo.STORAGE_LEN];
 			Buffer.BlockCopy(encryptorInfo._storage, 0, original, 0, EncryptorInfo.STORAGE_LEN);
 
 
 			// Test
-			encryptorInfo.Version = version;
-
 			// Validate
 			Assert.AreEqual(version, encryptorInfo.Version, "A10:");
 
@@ -109,22 +116,23 @@ namespace Test_EncryptionService
 		public void LastUpdated_Success(int caseNumber, string name)
 		{
 			// Setup
-			DateTime dateTime = DateTime.Now;
+			string keyName = "ABCd";
+			ushort version = 3;
+			DateTime updatedAt = DateTime.Now;
 
 			if ( caseNumber == 2 )
-				dateTime = DateTime.MinValue;
-			else if (caseNumber == 3) dateTime = DateTime.MaxValue;
+				updatedAt = DateTime.MinValue;
+			else if (caseNumber == 3) updatedAt = DateTime.MaxValue;
 
-			EncryptorInfo encryptorInfo = new EncryptorInfo();
+			EncryptorInfo encryptorInfo = new EncryptorInfo(keyName, version, updatedAt);
 			Byte[] original = new byte[EncryptorInfo.STORAGE_LEN];
 			Buffer.BlockCopy(encryptorInfo._storage,0,original,0,EncryptorInfo.STORAGE_LEN);
 			
 
 			// Test
-			encryptorInfo.LastUpdated = dateTime;
 
 			// Validate
-			Assert.AreEqual(dateTime, encryptorInfo.LastUpdated, "A10: Error running case " + caseNumber + " - Name: " + name);
+			Assert.AreEqual(updatedAt, encryptorInfo.LastUpdated, "A10: Error running case " + caseNumber + " - Name: " + name);
 
 			// Get the updated storage array so we can compare against original			
 			Byte[] updated = new byte[EncryptorInfo.STORAGE_LEN];
@@ -160,22 +168,22 @@ namespace Test_EncryptionService
 		[Test]
 		public void Constructor_ExistingData_Success () {
 			// Setup - Create an encryptor
-			EncryptorInfo encryptor = new EncryptorInfo();
-			encryptor.KeyName = "abGT";
-			encryptor.Version = 1;
-			encryptor.LastUpdated = DateTime.Now;
+			string keyName = "ABCd";
+			ushort version = 3;
+			DateTime updatedAt = DateTime.Now;
 
+			EncryptorInfo encryptorInfo = new EncryptorInfo(keyName, version, updatedAt);
 
-			byte [] createdEncryptorBytes = encryptor.GetAsBytes();
+			byte[] createdEncryptorBytes = encryptorInfo.GetAsBytes();
 
 			// Test - Create a new encryptor from the existing.
 			EncryptorInfo newEncryptorInfo = new EncryptorInfo(createdEncryptorBytes);
 
 			// Validate
-			Assert.AreEqual(encryptor.RecordIdentifier, newEncryptorInfo.RecordIdentifier,"A10:");
-			Assert.AreEqual(encryptor.KeyName,newEncryptorInfo.KeyName,"A20:");
-			Assert.AreEqual(encryptor.Version,newEncryptorInfo.Version,"A30:");
-			Assert.AreEqual(encryptor.LastUpdated,newEncryptorInfo.LastUpdated,"A40:");
+			Assert.AreEqual(encryptorInfo.RecordIdentifier, newEncryptorInfo.RecordIdentifier,"A10:");
+			Assert.AreEqual(encryptorInfo.KeyName,newEncryptorInfo.KeyName,"A20:");
+			Assert.AreEqual(encryptorInfo.Version,newEncryptorInfo.Version,"A30:");
+			Assert.AreEqual(encryptorInfo.LastUpdated,newEncryptorInfo.LastUpdated,"A40:");
 			Assert.AreEqual(true,newEncryptorInfo.IsEncryptorInfo,"A100:");
 		}
 
@@ -193,14 +201,15 @@ namespace Test_EncryptionService
 		[Test]
 		public void GetBytes_Equals_GetAsBytes () {
 			// Setup - Create an encryptor
-			EncryptorInfo encryptor = new EncryptorInfo();
-			encryptor.KeyName = "1954";
-			encryptor.Version = 464;
-			encryptor.LastUpdated = DateTime.Now;
+			string keyName = "1902";
+			ushort version = 464;
+			DateTime updatedAt = DateTime.Now;
+
+			EncryptorInfo encryptorInfo = new EncryptorInfo(keyName, version, updatedAt);
 
 			// Test
-			byte [] asBytes = encryptor.GetAsBytes();
-			byte [] bytes = encryptor.GetBytes();
+			byte [] asBytes = encryptorInfo.GetAsBytes();
+			byte [] bytes = encryptorInfo.GetBytes();
 
 			// Validate
 			Assert.AreEqual(bytes,asBytes,"A10:  The 2 arrays should have been exactly equal");
@@ -211,20 +220,22 @@ namespace Test_EncryptionService
 		[Test]
 		public void GetAsBytes_DoesNotChange_InternalStorage () {
 			// Setup - Create an encryptor
-			EncryptorInfo encryptor = new EncryptorInfo();
-			encryptor.KeyName = "1954";
-			encryptor.Version = 464;
-			encryptor.LastUpdated = DateTime.Now;
-			byte[] origBytes = encryptor.GetBytes();
+			string keyName = "ABCd";
+			ushort version = 3;
+			DateTime updatedAt = DateTime.Now;
+
+			EncryptorInfo encryptorInfo = new EncryptorInfo(keyName, version, updatedAt);
+
+			byte[] origBytes = encryptorInfo.GetBytes();
 
 			// Test
-			byte[] asBytes = encryptor.GetAsBytes();
+			byte[] asBytes = encryptorInfo.GetAsBytes();
 			asBytes[4] = 0x19;
 			asBytes[13] = 0xA2;
 
 
 			// Validate
-			byte[] bytes = encryptor.GetBytes();
+			byte[] bytes = encryptorInfo.GetBytes();
 			Assert.AreNotEqual(bytes, asBytes, "A20:  The 2 arrays should have not been equal.");
 			Assert.AreEqual(origBytes,bytes,"A30: The underlying byte array for EncryptorInfo should never be able to be changed externally");
 
@@ -240,10 +251,15 @@ namespace Test_EncryptionService
 		[TestCase("E - 2052/04/27 15:30:45", 647649774450000000, 1321074699150000000)]
 		[Test]
 		public void GetIVDateTime_Success (string caseName, long origTicks, long expectedIVTicks) {
-			EncryptorInfo encryptor = new EncryptorInfo();
-			encryptor.LastUpdated = new DateTime(origTicks);
+			// Setup
+			string keyName = "ABCd";
+			ushort version = 3;
+			DateTime updatedAt = new DateTime(origTicks);
 
-			DateTime ivDateTime = encryptor.GetIvDateTime();
+			EncryptorInfo encryptorInfo = new EncryptorInfo(keyName, version, updatedAt);
+
+
+			DateTime ivDateTime = encryptorInfo.GetIvDateTime();
 
 			long tickIV = ivDateTime.Ticks;
 
@@ -255,10 +271,12 @@ namespace Test_EncryptionService
 		public void GetIV_Success () {
 			// Setup
 			byte[] ivBytes = new byte[16];
+			string keyName = "ABCd";
+			ushort version = 3;
+			DateTime updatedAt = DateTime.Now;
 
-			EncryptorInfo encryptor = new EncryptorInfo();
-			encryptor.LastUpdated = DateTime.Now;
-			DateTime ivDateTime = encryptor.GetIvDateTime();
+			EncryptorInfo encryptorInfo = new EncryptorInfo(keyName, version, updatedAt);
+			DateTime ivDateTime = encryptorInfo.GetIvDateTime();
 
 
 			// Build the IV as we expect it.
@@ -268,10 +286,10 @@ namespace Test_EncryptionService
 
 
 			// Now get LastUpdated and copy it to buffer
-			byte[] lastupTime = BitConverter.GetBytes(encryptor.LastUpdated.Ticks);
+			byte[] lastupTime = BitConverter.GetBytes(encryptorInfo.LastUpdated.Ticks);
 			Buffer.BlockCopy(lastupTime, 0, ivBytes, 8, 8);
 
-			byte [] recBytes = encryptor.GetIV();
+			byte [] recBytes = encryptorInfo.GetIV();
 			Assert.AreEqual(ivBytes,recBytes,"A10:  The IV value is incorrect.");
 		}
 
@@ -279,25 +297,46 @@ namespace Test_EncryptionService
 		[Test]
 		public void Constructor_WithSpan () {
 			// Setup - Create an encryptor
-			EncryptorInfo encryptor = new EncryptorInfo();
-			encryptor.KeyName = "abGT";
-			encryptor.Version = 1;
-			encryptor.LastUpdated = DateTime.Now;
+			string keyName = "ABCd";
+			ushort version = 3;
+			DateTime updatedAt = DateTime.Now;
+
+			EncryptorInfo encryptorInfo = new EncryptorInfo(keyName, version, updatedAt);
 
 
-			byte[] createdEncryptorBytes = encryptor.GetAsBytes();
+			byte[] createdEncryptorBytes = encryptorInfo.GetAsBytes();
 			Span<byte> spanCreatedEncryptoBytes = new Span<byte>(createdEncryptorBytes);
 			
 			// Test - Create a new encryptor from the existing.
 			EncryptorInfo newEncryptorInfo = new EncryptorInfo(spanCreatedEncryptoBytes);
 
 			// Validate
-			Assert.AreEqual(encryptor.RecordIdentifier, newEncryptorInfo.RecordIdentifier, "A10:");
-			Assert.AreEqual(encryptor.KeyName, newEncryptorInfo.KeyName, "A20:");
-			Assert.AreEqual(encryptor.Version, newEncryptorInfo.Version, "A30:");
-			Assert.AreEqual(encryptor.LastUpdated, newEncryptorInfo.LastUpdated, "A40:");
+			Assert.AreEqual(encryptorInfo.RecordIdentifier, newEncryptorInfo.RecordIdentifier, "A10:");
+			Assert.AreEqual(encryptorInfo.KeyName, newEncryptorInfo.KeyName, "A20:");
+			Assert.AreEqual(encryptorInfo.Version, newEncryptorInfo.Version, "A30:");
+			Assert.AreEqual(encryptorInfo.LastUpdated, newEncryptorInfo.LastUpdated, "A40:");
 			Assert.AreEqual(true, newEncryptorInfo.IsEncryptorInfo, "A100:");
+		}
 
+
+		// Validates that the normal "New" constructor works.
+		[Test]
+		public void Constructor_KeyVersion_Success () {
+			// Setup
+			string keyName = "Just";
+			ushort version = 16;
+			DateTime early = DateTime.Now;
+
+			// Test
+			EncryptorInfo encryptorInfo = new EncryptorInfo(keyName, version, early);
+
+			// Validate
+			DateTime after = DateTime.Now;
+			Assert.AreEqual(keyName,encryptorInfo.KeyName,"A10: ");
+			Assert.AreEqual(version,encryptorInfo.Version,"A20: ");
+			Assert.AreEqual(early,encryptorInfo.LastUpdated,"A30: ");
+			Assert.AreEqual(EncryptorInfo.RECORD_IDENTIFIER_VALUE, encryptorInfo.RecordIdentifier, "A50: ");
+			Assert.IsTrue(encryptorInfo.IsEncryptorInfo, "A60: ");
 		}
 	}
 }
