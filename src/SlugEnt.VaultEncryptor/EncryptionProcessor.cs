@@ -43,6 +43,17 @@ namespace SlugEnt.VaultEncryptor
 
 
 		/// <summary>
+		/// Returns whether keyName exists in the KeyRing yet.
+		/// </summary>
+		/// <param name="keyName">The name of the key you want to check</param>
+		/// <returns></returns>
+		public bool KeyNameExists (string keyName) {
+			return _keyRing.ContainsKey(keyName);
+		}
+
+
+
+		/// <summary>
 		/// Adds the given EncryptionKeyVersioned object to the KeyRing.
 		/// </summary>
 		/// <param name="encryptionKeyVersioned"></param>
@@ -86,6 +97,8 @@ namespace SlugEnt.VaultEncryptor
 			// Get the Current EncryptionKeyVersioned object.  We always encrypt with the most current key.
 			EncryptionKeyVersioned encryptionKeyVersioned = GetEncryptionKeyVersioned(keyName);
 			
+			// TODO - If EncryptionKEy not found - retreive it.
+
 			// Create Encryption Header Prefix object
 			EncryptorInfo encryptorInfo = new EncryptorInfo(keyName,encryptionKeyVersioned.Version, DateTime.Now);
 

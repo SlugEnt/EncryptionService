@@ -1,5 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
+using Bogus;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 using SlugEnt;
@@ -400,5 +404,118 @@ namespace Test_EncryptionService {
 			Assert.AreEqual(data, dataDecrypted,"A10: ");
 		}
 
+
+
+
+		// Validate entire Add KeyRing, Add EncryptionKeyVersioned, Encrypt Data, Decrypt Data.  This test is similar to Simple version, but
+		// has a keyring with multiple keynames with multiple versions.
+		[Test]
+		public void EncryptDecrypt_Complex_Success () {
+			// Setup
+			Faker faker = new Faker();
+			List<KeyRing_sample> keyRingTest = new List<KeyRing_sample>();
+			EncryptionProcessor encryptionProcessor = new EncryptionProcessor();
+			TimeUnit ttl = new TimeUnit("3w");
+			
+
+			// Determine how many Keynames we will utilize
+			Random random = new Random();
+			int numKeynames = random.Next(10, 25);
+
+
+			// Test
+			for ( int i = 0; i < numKeynames; i++ ) {
+				Guid appID = Guid.NewGuid();
+
+				// Get unique keyname
+				string keyName = "";
+				bool generateNewKey = true;
+				while ( generateNewKey ) {
+					keyName = GenerateRandomKeyName();
+					if ( !encryptionProcessor.KeyNameExists(keyName) ) generateNewKey = false;
+				}
+
+				// Now we will add a random number of EncryptionKeyVersioned objects and randomly select a sample of those to actually encrypt data with.
+				int numVersions = random.Next(10, 100);
+				EncryptionKeyVersioned encryptionKeyVersioned = null;
+				for ( int j = 0; j < numVersions; j++ ) {
+					int createEncryptedDataRand = random.Next(1, 5);
+					bool createEncryptedData = false;
+					if ( createEncryptedDataRand == 3 ) createEncryptedData = true;
+
+					// Create the EncryptionKeyVersioned object.  If null then it is first one of this key.  If not null then increment version.
+					if ( encryptionKeyVersioned is null )
+						encryptionKeyVersioned = new EncryptionKeyVersioned(appID, keyName, ttl);
+					else
+						encryptionKeyVersioned = encryptionKeyVersioned.NewVersion();
+
+					// Load the EncKeyVer to Processor.
+					encryptionProcessor.LoadEncyptionKey(encryptionKeyVersioned);
+
+					// If this record has been selected to be encrypted, then encrypt and add to list of items to test.
+					string data = "";
+					if ( createEncryptedData ) {
+						data = faker.Lorem.Sentence();
+
+						encryptionProcessor.LoadEncyptionKey(encryptionKeyVersioned);
+
+						// Add to the list to test for decryption.
+						KeyRing_sample sample = new KeyRing_sample();
+						sample.dataOriginal = data;
+						sample.keyName = encryptionKeyVersioned.KeyNameShort;
+						sample.version = encryptionKeyVersioned.Version;
+
+						// Encrypt 
+						sample.dataEncrypted = encryptionProcessor.Encrypt(encryptionKeyVersioned.KeyNameShort, data);
+						keyRingTest.Add(sample);
+					}
+				}
+			}
+			// Validate
+			foreach (KeyRing_sample sample in keyRingTest)
+			{
+				string dataDecrypted = encryptionProcessor.Decrypt(sample.dataEncrypted);
+				Assert.AreEqual(sample.dataOriginal, dataDecrypted,
+				                "A10: KeyName [" +
+				                sample.keyName +
+				                "]  Version [" +
+				                sample.version +
+				                "]  OrigData [ " +
+				                sample.dataOriginal +
+				                "]  DecryptedData [" +
+				                dataDecrypted +
+				                "]");
+				TestContext.WriteLine("Successful Decryption:   KeyName [" +
+				                      sample.keyName +
+				                      "]  Version [" +
+				                      sample.version +
+				                      "]  OrigData [ " +
+				                      sample.dataOriginal);
+			}
+
+		}
+
+
+
+
+		/// <summary>
+		/// Builds a unique 4 character keyname
+		/// </summary>
+		/// <returns></returns>
+		private string GenerateRandomKeyName () {
+			Random random= new Random();
+			StringBuilder s = new StringBuilder();
+			for ( int i = 0; i < 2; i++ ) {
+				// 1st char
+				int charValue = random.Next(65, 90);
+				s.Append(Convert.ToChar(charValue));
+
+				// 2nd char
+				charValue = random.Next(97, 122);
+				s.Append(Convert.ToChar(charValue));
+			}
+
+			return s.ToString();
+		}
 	}
 }
