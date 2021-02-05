@@ -15,7 +15,7 @@ namespace Test_EncryptionService {
 			string KeyName = "abcd";
 			TimeUnit ttl = new TimeUnit("3d");
 			
-			EncryptionKeyVersioned encryptionKeyVersioned = new EncryptionKeyVersioned(appID, KeyName,ttl);
+			EncryptionKeyVersioned encryptionKeyVersioned = new EncryptionKeyVersioned(KeyName,ttl);
 
 			// Test
 			KeyRingMember keyRingMember = new KeyRingMember(encryptionKeyVersioned);
@@ -37,7 +37,7 @@ namespace Test_EncryptionService {
 			TimeUnit ttl = new TimeUnit("3d");
 			ushort updatedVersionNumber = 2454;
 
-			EncryptionKeyVersioned encryptionKeyVersioned = new EncryptionKeyVersioned(appID, KeyName, ttl);
+			EncryptionKeyVersioned encryptionKeyVersioned = new EncryptionKeyVersioned(KeyName, ttl);
 			EncryptionKeyVersioned laterVersion = encryptionKeyVersioned.NewVersion(updatedVersionNumber);
 
 			KeyRingMember keyRingMember = new KeyRingMember(encryptionKeyVersioned);
@@ -61,7 +61,7 @@ namespace Test_EncryptionService {
 			TimeUnit ttl = new TimeUnit("3d");
 			ushort updatedVersionNumber = 2021;
 
-			EncryptionKeyVersioned encryptionKeyVersioned = new EncryptionKeyVersioned(appID, KeyName, ttl);
+			EncryptionKeyVersioned encryptionKeyVersioned = new EncryptionKeyVersioned( KeyName, ttl);
 			EncryptionKeyVersioned laterVersion = encryptionKeyVersioned.NewVersion(updatedVersionNumber);
 
 			KeyRingMember keyRingMember = new KeyRingMember(encryptionKeyVersioned);

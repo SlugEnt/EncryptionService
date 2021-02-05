@@ -28,7 +28,10 @@ namespace Test_EncryptionService
 
 			// Test & Validate
 			ArgumentException ex =  Assert.Throws<ArgumentException>( () => new EncryptorInfo(keyName, version, updatedAt) ,"A10:  Should have thrown an Argument Exception");
-			Assert.IsTrue(ex.Message.Contains("KeyName must be exactly 4 characters"));
+
+			if (keyName is null) Assert.IsTrue(ex.Message.Contains("KeyName cannot be null"),"A10: ");
+			else 
+				Assert.IsTrue(ex.Message.Contains("KeyName must be exactly 4 characters"),"A11: ");
 		}
 
 

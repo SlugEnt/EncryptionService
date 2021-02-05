@@ -28,11 +28,10 @@ namespace Test_EncryptionService
 			DateTime recentTime = DateTime.Now;
 
 			// Testing
-			EncryptionKeyVersioned encVersioned = new EncryptionKeyVersioned(appID, keyNameShort, ttl);
+			EncryptionKeyVersioned encVersioned = new EncryptionKeyVersioned(keyNameShort, ttl);
 
 
 			// Validation
-			Assert.AreEqual(appID,encVersioned.ApplicationId,"A10: ");
 			Assert.AreEqual(keyNameShort,encVersioned.KeyNameShort, "A15: ");
 			Assert.AreEqual(ttl,encVersioned.TTL,"A20: ");
 
@@ -69,7 +68,7 @@ namespace Test_EncryptionService
 			TimeUnit ttl = new TimeUnit("5d");
 
 			// Testing / Validation
-			Assert.Throws<ArgumentException> (() => new EncryptionKeyVersioned(appID, keyname, ttl), "A10: ");
+			Assert.Throws<ArgumentException> (() => new EncryptionKeyVersioned(keyname, ttl), "A10: ");
 		}
 
 
@@ -85,7 +84,7 @@ namespace Test_EncryptionService
 			string secret = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef";
 
 			// Testing
-			EncryptionKeyVersioned encVersioned = new EncryptionKeyVersioned(appID, keyNameShort, ttl);
+			EncryptionKeyVersioned encVersioned = new EncryptionKeyVersioned(keyNameShort, ttl);
 			encVersioned.SetSecret(secret);
 
 
@@ -108,7 +107,7 @@ namespace Test_EncryptionService
 
 
 			// Testing
-			EncryptionKeyVersioned encVersioned = new EncryptionKeyVersioned(appID, keyNameShort, ttl);
+			EncryptionKeyVersioned encVersioned = new EncryptionKeyVersioned(keyNameShort, ttl);
 			Assert.Throws<ArgumentException>(() => encVersioned.SetSecret(secret), "A10: ");
 		}
 
@@ -124,7 +123,7 @@ namespace Test_EncryptionService
 			byte[] randomBytes = new byte[EncryptionConstants.BYTE_SIZE];
 
 			// Testing
-			EncryptionKeyVersioned encVersioned = new EncryptionKeyVersioned(appID, keyNameShort, ttl);
+			EncryptionKeyVersioned encVersioned = new EncryptionKeyVersioned(keyNameShort, ttl);
 			encVersioned.SetSecret(randomBytes);
 
 
@@ -151,7 +150,7 @@ namespace Test_EncryptionService
 			byte[] randomBytes = new byte[length];
 
 			// Testing
-			EncryptionKeyVersioned encVersioned = new EncryptionKeyVersioned(appID, keyNameShort, ttl);
+			EncryptionKeyVersioned encVersioned = new EncryptionKeyVersioned(keyNameShort, ttl);
 
 			//Validation
 			Assert.Throws<ArgumentException>(() => encVersioned.SetSecret(randomBytes), "A10:");
@@ -209,8 +208,8 @@ namespace Test_EncryptionService
 			DateTime recentTime = DateTime.Now;
 
 
-			EncryptionKeyVersioned a = new EncryptionKeyVersioned(appID,keyNameShort,ttl );
-			EncryptionKeyVersioned b = new EncryptionKeyVersioned(appID, keyNameShort, ttl);
+			EncryptionKeyVersioned a = new EncryptionKeyVersioned(keyNameShort,ttl );
+			EncryptionKeyVersioned b = new EncryptionKeyVersioned(keyNameShort, ttl);
 
 			// Validate
 			Assert.IsTrue(a == b,"A10: ");
@@ -229,27 +228,8 @@ namespace Test_EncryptionService
 			DateTime recentTime = DateTime.Now;
 
 
-			EncryptionKeyVersioned a = new EncryptionKeyVersioned(appID, keyNameShort, ttl);
-			EncryptionKeyVersioned b = new EncryptionKeyVersioned(appID, key2, ttl);
-
-			// Validate
-			Assert.IsTrue(a != b, "A10: ");
-			Assert.IsFalse(a == b, "A20: ");
-		}
-
-		[Test]
-		public void NotEquals_AppIDDiff_Success()
-		{
-			//Setup
-			Guid appID = Guid.NewGuid();
-			TimeUnit ttl = new TimeUnit("5d");
-			string keyNameShort = "ABcd";
-			Guid appID2 = Guid.NewGuid();
-			DateTime recentTime = DateTime.Now;
-
-
-			EncryptionKeyVersioned a = new EncryptionKeyVersioned(appID, keyNameShort, ttl);
-			EncryptionKeyVersioned b = new EncryptionKeyVersioned(appID2, keyNameShort, ttl);
+			EncryptionKeyVersioned a = new EncryptionKeyVersioned(keyNameShort, ttl);
+			EncryptionKeyVersioned b = new EncryptionKeyVersioned(key2, ttl);
 
 			// Validate
 			Assert.IsTrue(a != b, "A10: ");
@@ -267,7 +247,7 @@ namespace Test_EncryptionService
 			string keyNameShort = "ABcd";
 			ushort version2 = 4;
 
-			EncryptionKeyVersioned a = new EncryptionKeyVersioned(appID, keyNameShort, ttl);
+			EncryptionKeyVersioned a = new EncryptionKeyVersioned(keyNameShort, ttl);
 			EncryptionKeyVersioned b = a.NewVersion();
 
 
@@ -284,13 +264,12 @@ namespace Test_EncryptionService
 			TimeUnit ttl = new TimeUnit("5d");
 			string keyNameShort = "ABcd";
 
-			EncryptionKeyVersioned a = new EncryptionKeyVersioned(appID, keyNameShort, ttl);
+			EncryptionKeyVersioned a = new EncryptionKeyVersioned(keyNameShort, ttl);
 
 			// Test
 			EncryptionKeyVersioned b = a.NewVersion();
 
 			// Validate
-			Assert.AreEqual(a.ApplicationId,b.ApplicationId,"A10:");
 			Assert.AreEqual(a.KeyNameShort, b.KeyNameShort, "A20: ");
 
 			ushort newVersion = (ushort) (a.Version + 1);
@@ -309,13 +288,12 @@ namespace Test_EncryptionService
 			string keyNameShort = "ABcd";
 			ushort newVersion = 245;
 
-			EncryptionKeyVersioned a = new EncryptionKeyVersioned(appID, keyNameShort, ttl);
+			EncryptionKeyVersioned a = new EncryptionKeyVersioned( keyNameShort, ttl);
 
 			// Test
 			EncryptionKeyVersioned b = a.NewVersion(newVersion);
 
 			// Validate
-			Assert.AreEqual(a.ApplicationId, b.ApplicationId, "A10:");
 			Assert.AreEqual(a.KeyNameShort, b.KeyNameShort, "A20: ");
 			Assert.AreEqual(newVersion, b.Version, "A30: ");
 		}

@@ -353,7 +353,7 @@ namespace Test_EncryptionService {
 			ushort updatedVersionNumber = 2454;
 
 			// Create a number of EncryptionKeyVersioned objects.
-			EncryptionKeyVersioned enc1 = new EncryptionKeyVersioned(appID, KeyName, ttl);
+			EncryptionKeyVersioned enc1 = new EncryptionKeyVersioned( KeyName, ttl);
 			EncryptionKeyVersioned enc2 = enc1.NewVersion();
 			EncryptionKeyVersioned enc3 = enc2.NewVersion();
 			EncryptionKeyVersioned enc4 = enc3.NewVersion(4000);
@@ -390,7 +390,7 @@ namespace Test_EncryptionService {
 			string data = "The first encryption data message!";
 
 			// Create a number of EncryptionKeyVersioned objects.
-			EncryptionKeyVersioned enc1 = new EncryptionKeyVersioned(appID, KeyName, ttl);
+			EncryptionKeyVersioned enc1 = new EncryptionKeyVersioned( KeyName, ttl);
 
 
 			// Test
@@ -423,7 +423,8 @@ namespace Test_EncryptionService {
 			int numKeynames = random.Next(10, 25);
 
 
-			// Test
+			// Test - we will run thru 10 - 25 random keynames, each with 10 - 100 versions, each with a random 20% sampling to perform
+			// actual encryption / decryption test on.
 			for ( int i = 0; i < numKeynames; i++ ) {
 				Guid appID = Guid.NewGuid();
 
@@ -445,7 +446,7 @@ namespace Test_EncryptionService {
 
 					// Create the EncryptionKeyVersioned object.  If null then it is first one of this key.  If not null then increment version.
 					if ( encryptionKeyVersioned is null )
-						encryptionKeyVersioned = new EncryptionKeyVersioned(appID, keyName, ttl);
+						encryptionKeyVersioned = new EncryptionKeyVersioned( keyName, ttl);
 					else
 						encryptionKeyVersioned = encryptionKeyVersioned.NewVersion();
 

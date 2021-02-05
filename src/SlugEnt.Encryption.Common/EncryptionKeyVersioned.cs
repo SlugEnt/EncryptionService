@@ -24,16 +24,15 @@ namespace SlugEnt.EncryptionService {
 		///     object. If you are loading from JSON or other, ensure you are using one
 		///     of the methods that creates an EncryptionKeyVersioned object.
 		/// </summary>
-		/// <param name="applicationId"></param>
 		/// <param name="ttl"></param>
 		/// <param name="secret">
 		///     It is highly recommended to let the app generate a secret for you.  If you provide it must be
 		///     exactly of the correct size.
 		/// </param>
-		public EncryptionKeyVersioned (Guid applicationId, string keyNameShortShort, TimeUnit ttl, string secret = "") {
-			ApplicationId = applicationId;
+		public EncryptionKeyVersioned (string keyNameShortShort, TimeUnit ttl, string secret = "") {
+//			ApplicationId = applicationId;
 
-			ValidateKeyNameShort(keyNameShortShort);
+			EncryptionFunctions.ValidateKeyNameShort(keyNameShortShort);
 			KeyNameShort = keyNameShortShort;
 			Version = 1;
 			Id = BuildID(KeyNameShort, Version, true);
@@ -68,7 +67,7 @@ namespace SlugEnt.EncryptionService {
 		/// <param name="keyNameShortShort"></param>
 		/// <param name="ttl"></param>
 		/// <param name="version"></param>
-		internal EncryptionKeyVersioned (Guid applicationId, string keyNameShortShort, TimeUnit ttl, ushort version) : this(applicationId,keyNameShortShort,ttl) {
+		internal EncryptionKeyVersioned (string keyNameShortShort, TimeUnit ttl, ushort version) : this(keyNameShortShort,ttl) {
 			Version = version;
 		}
 
@@ -76,7 +75,7 @@ namespace SlugEnt.EncryptionService {
 		/// <summary>
 		///     The Application this Versioned Encryption Key is for.
 		/// </summary>
-		public Guid ApplicationId { get; }
+		//public Guid ApplicationId { get; }
 
 
 		/// <summary>
@@ -118,7 +117,7 @@ namespace SlugEnt.EncryptionService {
 		/// <summary>
 		///     The status of this Encryption Key
 		/// </summary>
-		public EnumEncryptionKeyStatus Status { get; private set; }
+		public EnumEncryptionKeyStatus Status { get; set; }
 
 
 		/// <summary>
@@ -141,8 +140,7 @@ namespace SlugEnt.EncryptionService {
 		/// <param name="version">The version number</param>
 		/// <returns>The ID that results from the Short Key Name and the Version Number</returns>
 		public static string BuildID (string shortKeyName, ushort version, bool skipValidation = false) {
-			if ( !skipValidation ) { ValidateKeyNameShort(shortKeyName); }
-
+			EncryptionFunctions.ValidateKeyNameShort(shortKeyName);
 			return shortKeyName + version;
 		}
 
@@ -196,35 +194,25 @@ namespace SlugEnt.EncryptionService {
 			else
 				version = updatedVersionNumber;
 
-			EncryptionKeyVersioned b = new EncryptionKeyVersioned(this.ApplicationId,this.KeyNameShort,this.TTL,version);
+			EncryptionKeyVersioned b = new EncryptionKeyVersioned(this.KeyNameShort,this.TTL,version);
 			return b;
 		}
 
 
 
-		/// <summary>
-		///     Validates that the KeyName is of the correct size.  Throws an error if it is not.
-		/// </summary>
-		/// <param name="keyName">The value to validate</param>
-		internal static void ValidateKeyNameShort (string keyName) {
-			if ( keyName.Length != EncryptionConstants.KEYNAME_SIZE ) {
-				throw new ArgumentException("KeyNameShort length must be exactly [" + EncryptionConstants.KEYNAME_SIZE + "] characters long");
-			}
-		}
-
 		public bool Equals([AllowNull] EncryptionKeyVersioned other) {
-			if ( (this.KeyNameShort == other.KeyNameShort) && (this.ApplicationId == other.ApplicationId) && (this.Version == other.Version) ) return true;
+			if ( (this.KeyNameShort == other.KeyNameShort) && (this.Version == other.Version) ) return true;
 			return false;
 		}
 
 
 		public static bool operator == (EncryptionKeyVersioned x, EncryptionKeyVersioned y) {
-			return ((x.KeyNameShort == y.KeyNameShort) && (x.ApplicationId == y.ApplicationId) && (x.Version == y.Version));
+			return ((x.KeyNameShort == y.KeyNameShort) &&  (x.Version == y.Version));
 		}
 
 
 		public static bool operator != (EncryptionKeyVersioned x, EncryptionKeyVersioned y) {
-			return !((x.KeyNameShort == y.KeyNameShort) && (x.ApplicationId == y.ApplicationId) && (x.Version == y.Version));
+			return !((x.KeyNameShort == y.KeyNameShort) && (x.Version == y.Version));
 		}
 		
 	}
